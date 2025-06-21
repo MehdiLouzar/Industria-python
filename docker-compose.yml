@@ -1,10 +1,10 @@
 services:
   flask_app:
-    build: ./flask_app
+    build: .
     ports:
       - "8000:8000"
     volumes:
-      - ./flask_app:/app
+      - .:/app
     depends_on:
       - db
     environment:

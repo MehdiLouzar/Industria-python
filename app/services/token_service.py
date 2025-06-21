@@ -1,0 +1,2 @@
+class TokenService:
+    pass
