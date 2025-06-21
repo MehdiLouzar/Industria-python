@@ -8,3 +8,4 @@ geoalchemy2
 marshmallow-sqlalchemy
 requests
 pytest
+flask-restx

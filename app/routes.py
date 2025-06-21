@@ -1,12 +1,15 @@
-
 from flask import Blueprint, jsonify, request, abort
+from flask_restx import Resource
+
 from . import db
-from .services import CRUDService, CountryService, RegionService, ZoneService, ParcelService, AppointmentService
 from .decorators import login_required
+from .services import (
+    CRUDService, CountryService, RegionService, ZoneService, ParcelService,
+    AppointmentService
+)
 from .models import (
-    Country, Region, Role, User, Amenity, Zone,
-    Activity, Parcel, ActivityLog, AppointmentStatus,
-    Appointment, ZoneActivity, ParcelAmenity
+    Country, Region, Role, User, Amenity, Zone, Activity, Parcel, ActivityLog,
+    AppointmentStatus, Appointment, ZoneActivity, ParcelAmenity
 )
 from .schemas import (
     CountrySchema, RegionSchema, RoleSchema, UserSchema, AmenitySchema,
@@ -14,62 +17,69 @@ from .schemas import (
     AppointmentStatusSchema, AppointmentSchema, ZoneActivitySchema,
     ParcelAmenitySchema
 )
+from .swagger import api
 
 bp = Blueprint('main', __name__)
+api.init_app(bp)
+
 
 @bp.route('/')
 def index():
     return jsonify(message='Bonjour, Flask avec Docker !')
 
 
-def register_crud_routes(service: CRUDService, schema, endpoint):
+def register_crud_routes(service: CRUDService, schema, endpoint: str):
+    """Register CRUD routes for a model on the given endpoint."""
     single_schema = schema()
     many_schema = schema(many=True)
+    ns = api.namespace(endpoint, path=f'/{endpoint}',
+                       description=f'Operations on {endpoint}')
 
-    list_url = f'/{endpoint}'
-    detail_url = f'/{endpoint}/<int:item_id>'
+    payload_model = ns.schema_model(f'{endpoint}_payload', {'type': 'object'})
 
-    @bp.get(list_url, endpoint=f'list_{endpoint}')
-    @login_required
-    def list_items(svc=service, schema=many_schema):
-        items = svc.list()
-        return jsonify(schema.dump(items))
+    @ns.route('/')
+    class ListResource(Resource):
+        @login_required
+        def get(self, svc=service, schema=many_schema):
+            items = svc.list()
+            return schema.dump(items)
 
-    @bp.post(list_url, endpoint=f'create_{endpoint}')
-    @login_required
-    def create_item(svc=service, schema=single_schema):
-        data = request.get_json() or {}
-        try:
-            obj = schema.load(data, session=db.session)
-        except Exception as e:
-            abort(400, str(e))
-        obj = svc.create(obj)
-        return jsonify(single_schema.dump(obj)), 201
+        @login_required
+        @ns.expect(payload_model)
+        def post(self, svc=service, schema=single_schema):
+            data = request.get_json() or {}
+            try:
+                obj = schema.load(data, session=db.session)
+            except Exception as e:
+                abort(400, str(e))
+            created = svc.create(obj)
+            return schema.dump(created), 201
 
-    @bp.get(detail_url, endpoint=f'get_{endpoint}')
-    @login_required
-    def get_item(item_id, svc=service, schema=single_schema):
-        obj = svc.get_or_404(item_id)
-        return jsonify(schema.dump(obj))
+    @ns.route('/<int:item_id>')
+    class DetailResource(Resource):
+        @login_required
+        def get(self, item_id, svc=service, schema=single_schema):
+            obj = svc.get_or_404(item_id)
+            return schema.dump(obj)
 
-    @bp.put(detail_url, endpoint=f'update_{endpoint}')
-    @login_required
-    def update_item(item_id, svc=service, schema=single_schema):
-        obj = svc.get_or_404(item_id)
-        data = request.get_json() or {}
-        try:
-            obj = schema.load(data, instance=obj, partial=True, session=db.session)
-        except Exception as e:
-            abort(400, str(e))
-        obj = svc.update(obj)
-        return jsonify(schema.dump(obj))
+        @login_required
+        @ns.expect(payload_model)
+        def put(self, item_id, svc=service, schema=single_schema):
+            obj = svc.get_or_404(item_id)
+            data = request.get_json() or {}
+            try:
+                obj = schema.load(data, instance=obj, partial=True,
+                                  session=db.session)
+            except Exception as e:
+                abort(400, str(e))
+            updated = svc.update(obj)
+            return schema.dump(updated)
 
-    @bp.delete(detail_url, endpoint=f'delete_{endpoint}')
-    @login_required
-    def delete_item(item_id, svc=service):
-        obj = svc.get_or_404(item_id)
-        svc.delete(obj)
-        return '', 204
+        @login_required
+        def delete(self, item_id, svc=service):
+            obj = svc.get_or_404(item_id)
+            svc.delete(obj)
+            return '', 204
 
 
 # Register CRUD routes for models with simple integer primary keys
@@ -86,58 +96,74 @@ register_crud_routes(CRUDService(AppointmentStatus), AppointmentStatusSchema, 'a
 register_crud_routes(AppointmentService(Appointment), AppointmentSchema, 'appointments')
 
 
-# Custom routes for association tables with composite keys
-@bp.get('/zone_activities')
-@login_required
-def list_zone_activities():
-    svc = CRUDService(ZoneActivity)
-    items = svc.list()
-    return jsonify(ZoneActivitySchema(many=True).dump(items))
-
-@bp.post('/zone_activities')
-@login_required
-def create_zone_activity():
-    svc = CRUDService(ZoneActivity)
-    data = request.get_json() or {}
-    try:
-        obj = ZoneActivitySchema().load(data, session=db.session)
-    except Exception as e:
-        abort(400, str(e))
-    obj = svc.create(obj)
-    return jsonify(ZoneActivitySchema().dump(obj)), 201
-
-@bp.delete('/zone_activities/<int:zone_id>/<int:activity_id>')
-@login_required
-def delete_zone_activity(zone_id, activity_id):
-    svc = CRUDService(ZoneActivity)
-    obj = svc.get_or_404((zone_id, activity_id))
-    svc.delete(obj)
-    return '', 204
+# Namespaces for association tables with composite keys
+zone_activity_ns = api.namespace('zone_activities', path='/zone_activities',
+                                 description='Zone/Activity links')
+zone_activity_payload = zone_activity_ns.schema_model('ZoneActivityPayload', {'type': 'object'})
 
 
-@bp.get('/parcel_amenities')
-@login_required
-def list_parcel_amenities():
-    svc = CRUDService(ParcelAmenity)
-    items = svc.list()
-    return jsonify(ParcelAmenitySchema(many=True).dump(items))
+@zone_activity_ns.route('/')
+class ZoneActivityList(Resource):
+    @login_required
+    def get(self):
+        svc = CRUDService(ZoneActivity)
+        items = svc.list()
+        return ZoneActivitySchema(many=True).dump(items)
 
-@bp.post('/parcel_amenities')
-@login_required
-def create_parcel_amenity():
-    svc = CRUDService(ParcelAmenity)
-    data = request.get_json() or {}
-    try:
-        obj = ParcelAmenitySchema().load(data, session=db.session)
-    except Exception as e:
-        abort(400, str(e))
-    obj = svc.create(obj)
-    return jsonify(ParcelAmenitySchema().dump(obj)), 201
+    @login_required
+    @zone_activity_ns.expect(zone_activity_payload)
+    def post(self):
+        svc = CRUDService(ZoneActivity)
+        data = request.get_json() or {}
+        try:
+            obj = ZoneActivitySchema().load(data, session=db.session)
+        except Exception as e:
+            abort(400, str(e))
+        created = svc.create(obj)
+        return ZoneActivitySchema().dump(created), 201
 
-@bp.delete('/parcel_amenities/<int:parcel_id>/<int:amenity_id>')
-@login_required
-def delete_parcel_amenity(parcel_id, amenity_id):
-    svc = CRUDService(ParcelAmenity)
-    obj = svc.get_or_404((parcel_id, amenity_id))
-    svc.delete(obj)
-    return '', 204
+
+@zone_activity_ns.route('/<int:zone_id>/<int:activity_id>')
+class ZoneActivityResource(Resource):
+    @login_required
+    def delete(self, zone_id, activity_id):
+        svc = CRUDService(ZoneActivity)
+        obj = svc.get_or_404((zone_id, activity_id))
+        svc.delete(obj)
+        return '', 204
+
+
+parcel_amenity_ns = api.namespace('parcel_amenities', path='/parcel_amenities',
+                                  description='Parcel/Amenity links')
+parcel_amenity_payload = parcel_amenity_ns.schema_model('ParcelAmenityPayload', {'type': 'object'})
+
+
+@parcel_amenity_ns.route('/')
+class ParcelAmenityList(Resource):
+    @login_required
+    def get(self):
+        svc = CRUDService(ParcelAmenity)
+        items = svc.list()
+        return ParcelAmenitySchema(many=True).dump(items)
+
+    @login_required
+    @parcel_amenity_ns.expect(parcel_amenity_payload)
+    def post(self):
+        svc = CRUDService(ParcelAmenity)
+        data = request.get_json() or {}
+        try:
+            obj = ParcelAmenitySchema().load(data, session=db.session)
+        except Exception as e:
+            abort(400, str(e))
+        created = svc.create(obj)
+        return ParcelAmenitySchema().dump(created), 201
+
+
+@parcel_amenity_ns.route('/<int:parcel_id>/<int:amenity_id>')
+class ParcelAmenityResource(Resource):
+    @login_required
+    def delete(self, parcel_id, amenity_id):
+        svc = CRUDService(ParcelAmenity)
+        obj = svc.get_or_404((parcel_id, amenity_id))
+        svc.delete(obj)
+        return '', 204
