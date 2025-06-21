@@ -1,7 +1,8 @@
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, g
 from flask_restx import Resource
 from . import db
 from .decorators import login_required
+from .services import LoginService
 from .services import (
     CRUDService, CountryService, RegionService, ZoneService, ParcelService,
     AppointmentService
@@ -35,6 +36,36 @@ openapi_spec = {
 @bp.route('/')
 def index():
     return jsonify(message='Bonjour, Flask avec Docker !')
+
+
+@bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        abort(400, 'Missing credentials')
+    svc = LoginService()
+    try:
+        tokens = svc.login(username, password)
+    except Exception as exc:  # pragma: no cover - pass through errors
+        abort(401, description=str(exc))
+    return jsonify(tokens)
+
+
+@bp.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    data = request.get_json() or {}
+    refresh_token = data.get('refresh_token')
+    if refresh_token:
+        svc = LoginService()
+        try:
+            svc.logout(refresh_token)
+        except Exception as exc:  # pragma: no cover - pass through errors
+            abort(400, description=str(exc))
+    g.pop('token_payload', None)
+    return jsonify(message='Logged out')
 
 def register_crud_routes(service: CRUDService, schema, endpoint: str):
     """Register CRUD routes for a model on the given endpoint."""
