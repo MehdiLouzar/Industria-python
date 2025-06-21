@@ -19,4 +19,3 @@ __all__ = [
     'Amenity', 'Zone', 'Activity', 'Parcel', 'ActivityLog',
     'AppointmentStatus', 'Appointment', 'ZoneActivity', 'ParcelAmenity'
 ]
-
