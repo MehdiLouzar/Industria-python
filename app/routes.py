@@ -1,5 +1,5 @@
 
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, render_template_string
 from . import db
 from .services import CRUDService, CountryService, RegionService, ZoneService, ParcelService, AppointmentService
 from .decorators import login_required
@@ -17,9 +17,49 @@ from .schemas import (
 
 bp = Blueprint('main', __name__)
 
+# Basic OpenAPI specification that will be populated dynamically when routes are
+# registered. Only minimal information is provided so that Swagger UI can
+# present the available endpoints.
+openapi_spec = {
+    "openapi": "3.0.0",
+    "info": {"title": "Industria API", "version": "1.0"},
+    "paths": {}
+}
+
 @bp.route('/')
 def index():
     return jsonify(message='Bonjour, Flask avec Docker !')
+
+
+@bp.get('/openapi.json')
+def get_openapi_spec():
+    """Return the generated OpenAPI specification as JSON."""
+    return jsonify(openapi_spec)
+
+
+@bp.get('/docs')
+def swagger_ui():
+    """Serve a minimal Swagger UI for visualising the API."""
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Swagger UI</title>
+      <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+    </head>
+    <body>
+      <div id="swagger-ui"></div>
+      <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+      <script>
+        SwaggerUIBundle({
+          url: '/openapi.json',
+          dom_id: '#swagger-ui'
+        });
+      </script>
+    </body>
+    </html>
+    """
+    return render_template_string(html)
 
 
 def register_crud_routes(service: CRUDService, schema, endpoint):
@@ -28,6 +68,58 @@ def register_crud_routes(service: CRUDService, schema, endpoint):
 
     list_url = f'/{endpoint}'
     detail_url = f'/{endpoint}/<int:item_id>'
+
+    # Populate the OpenAPI specification for these CRUD endpoints
+    openapi_spec["paths"].setdefault(list_url, {}).update({
+        "get": {
+            "summary": f"List {endpoint}",
+            "responses": {"200": {"description": "List of objects"}}
+        },
+        "post": {
+            "summary": f"Create {endpoint}",
+            "requestBody": {
+                "required": True,
+                "content": {"application/json": {"schema": {"type": "object"}}}
+            },
+            "responses": {
+                "201": {"description": "Created"},
+                "400": {"description": "Validation error"}
+            }
+        }
+    })
+    detail_path = detail_url.replace('<int:item_id>', '{item_id}')
+    openapi_spec["paths"].setdefault(detail_path, {}).update({
+        "parameters": [
+            {
+                "name": "item_id",
+                "in": "path",
+                "required": True,
+                "schema": {"type": "integer"}
+            }
+        ],
+        "get": {
+            "summary": f"Retrieve {endpoint}",
+            "responses": {
+                "200": {"description": "Object details"},
+                "404": {"description": "Not found"}
+            }
+        },
+        "put": {
+            "summary": f"Update {endpoint}",
+            "requestBody": {
+                "required": True,
+                "content": {"application/json": {"schema": {"type": "object"}}}
+            },
+            "responses": {
+                "200": {"description": "Updated"},
+                "400": {"description": "Validation error"}
+            }
+        },
+        "delete": {
+            "summary": f"Delete {endpoint}",
+            "responses": {"204": {"description": "Deleted"}}
+        }
+    })
 
     @bp.get(list_url, endpoint=f'list_{endpoint}')
     @login_required
@@ -94,6 +186,21 @@ def list_zone_activities():
     items = svc.list()
     return jsonify(ZoneActivitySchema(many=True).dump(items))
 
+openapi_spec["paths"].setdefault("/zone_activities", {}).update({
+    "get": {
+        "summary": "List zone activities",
+        "responses": {"200": {"description": "List of zone/activity links"}}
+    },
+    "post": {
+        "summary": "Create zone activity",
+        "requestBody": {
+            "required": True,
+            "content": {"application/json": {"schema": {"type": "object"}}}
+        },
+        "responses": {"201": {"description": "Created"}, "400": {"description": "Validation error"}}
+    }
+})
+
 @bp.post('/zone_activities')
 @login_required
 def create_zone_activity():
@@ -114,6 +221,17 @@ def delete_zone_activity(zone_id, activity_id):
     svc.delete(obj)
     return '', 204
 
+openapi_spec["paths"].setdefault("/zone_activities/{zone_id}/{activity_id}", {}).update({
+    "parameters": [
+        {"name": "zone_id", "in": "path", "required": True, "schema": {"type": "integer"}},
+        {"name": "activity_id", "in": "path", "required": True, "schema": {"type": "integer"}}
+    ],
+    "delete": {
+        "summary": "Delete zone activity",
+        "responses": {"204": {"description": "Deleted"}, "404": {"description": "Not found"}}
+    }
+})
+
 
 @bp.get('/parcel_amenities')
 @login_required
@@ -121,6 +239,21 @@ def list_parcel_amenities():
     svc = CRUDService(ParcelAmenity)
     items = svc.list()
     return jsonify(ParcelAmenitySchema(many=True).dump(items))
+
+openapi_spec["paths"].setdefault("/parcel_amenities", {}).update({
+    "get": {
+        "summary": "List parcel amenities",
+        "responses": {"200": {"description": "List of parcel/amenity links"}}
+    },
+    "post": {
+        "summary": "Create parcel amenity",
+        "requestBody": {
+            "required": True,
+            "content": {"application/json": {"schema": {"type": "object"}}}
+        },
+        "responses": {"201": {"description": "Created"}, "400": {"description": "Validation error"}}
+    }
+})
 
 @bp.post('/parcel_amenities')
 @login_required
@@ -141,3 +274,14 @@ def delete_parcel_amenity(parcel_id, amenity_id):
     obj = svc.get_or_404((parcel_id, amenity_id))
     svc.delete(obj)
     return '', 204
+
+openapi_spec["paths"].setdefault("/parcel_amenities/{parcel_id}/{amenity_id}", {}).update({
+    "parameters": [
+        {"name": "parcel_id", "in": "path", "required": True, "schema": {"type": "integer"}},
+        {"name": "amenity_id", "in": "path", "required": True, "schema": {"type": "integer"}}
+    ],
+    "delete": {
+        "summary": "Delete parcel amenity",
+        "responses": {"204": {"description": "Deleted"}, "404": {"description": "Not found"}}
+    }
+})
