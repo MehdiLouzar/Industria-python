@@ -35,6 +35,7 @@ Swagger UI exposing the OpenAPI description of the routes is available once the
 containers are running. Navigate to `http://localhost:8000/docs` to explore the
 API. The raw specification can be fetched at `http://localhost:8000/openapi.json`.
 
+
 ### Authentication
 
 The application expects requests to include a JWT access token issued by

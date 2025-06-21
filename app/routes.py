@@ -77,17 +77,43 @@ def register_crud_routes(service: CRUDService, schema, endpoint):
         },
         "post": {
             "summary": f"Create {endpoint}",
-            "responses": {"201": {"description": "Created"}, "400": {"description": "Validation error"}}
+            "requestBody": {
+                "required": True,
+                "content": {"application/json": {"schema": {"type": "object"}}}
+            },
+            "responses": {
+                "201": {"description": "Created"},
+                "400": {"description": "Validation error"}
+            }
         }
     })
-    openapi_spec["paths"].setdefault(detail_url.replace('<int:item_id>', '{item_id}'), {}).update({
+    detail_path = detail_url.replace('<int:item_id>', '{item_id}')
+    openapi_spec["paths"].setdefault(detail_path, {}).update({
+        "parameters": [
+            {
+                "name": "item_id",
+                "in": "path",
+                "required": True,
+                "schema": {"type": "integer"}
+            }
+        ],
         "get": {
             "summary": f"Retrieve {endpoint}",
-            "responses": {"200": {"description": "Object details"}, "404": {"description": "Not found"}}
+            "responses": {
+                "200": {"description": "Object details"},
+                "404": {"description": "Not found"}
+            }
         },
         "put": {
             "summary": f"Update {endpoint}",
-            "responses": {"200": {"description": "Updated"}, "400": {"description": "Validation error"}}
+            "requestBody": {
+                "required": True,
+                "content": {"application/json": {"schema": {"type": "object"}}}
+            },
+            "responses": {
+                "200": {"description": "Updated"},
+                "400": {"description": "Validation error"}
+            }
         },
         "delete": {
             "summary": f"Delete {endpoint}",
@@ -167,6 +193,10 @@ openapi_spec["paths"].setdefault("/zone_activities", {}).update({
     },
     "post": {
         "summary": "Create zone activity",
+        "requestBody": {
+            "required": True,
+            "content": {"application/json": {"schema": {"type": "object"}}}
+        },
         "responses": {"201": {"description": "Created"}, "400": {"description": "Validation error"}}
     }
 })
@@ -192,6 +222,10 @@ def delete_zone_activity(zone_id, activity_id):
     return '', 204
 
 openapi_spec["paths"].setdefault("/zone_activities/{zone_id}/{activity_id}", {}).update({
+    "parameters": [
+        {"name": "zone_id", "in": "path", "required": True, "schema": {"type": "integer"}},
+        {"name": "activity_id", "in": "path", "required": True, "schema": {"type": "integer"}}
+    ],
     "delete": {
         "summary": "Delete zone activity",
         "responses": {"204": {"description": "Deleted"}, "404": {"description": "Not found"}}
@@ -213,6 +247,10 @@ openapi_spec["paths"].setdefault("/parcel_amenities", {}).update({
     },
     "post": {
         "summary": "Create parcel amenity",
+        "requestBody": {
+            "required": True,
+            "content": {"application/json": {"schema": {"type": "object"}}}
+        },
         "responses": {"201": {"description": "Created"}, "400": {"description": "Validation error"}}
     }
 })
@@ -238,6 +276,10 @@ def delete_parcel_amenity(parcel_id, amenity_id):
     return '', 204
 
 openapi_spec["paths"].setdefault("/parcel_amenities/{parcel_id}/{amenity_id}", {}).update({
+    "parameters": [
+        {"name": "parcel_id", "in": "path", "required": True, "schema": {"type": "integer"}},
+        {"name": "amenity_id", "in": "path", "required": True, "schema": {"type": "integer"}}
+    ],
     "delete": {
         "summary": "Delete parcel amenity",
         "responses": {"204": {"description": "Deleted"}, "404": {"description": "Not found"}}
