@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, abort, g
+from flask import Blueprint, jsonify, request, abort, g, render_template
 from flask_restx import Resource
 from . import db
 from .decorators import login_required
@@ -36,6 +36,12 @@ openapi_spec = {
 @bp.route('/')
 def index():
     return jsonify(message='Bonjour, Flask avec Docker !')
+
+
+@bp.route('/login', methods=['GET'])
+def login_form():
+    """Render the login page."""
+    return render_template('login.html')
 
 
 @bp.route('/login', methods=['POST'])
