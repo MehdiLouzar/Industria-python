@@ -32,8 +32,10 @@ Database tables are created automatically on first start using SQLAlchemy.
 ### API documentation
 
 Swagger UI exposing the OpenAPI description of the routes is available once the
-containers are running. Navigate to `http://localhost:8000/docs` to explore the
-API. The raw specification can be fetched at `http://localhost:8000/swagger.json`.
+containers are running. Navigate to `http://localhost:8000/api/docs` to explore
+the API. The raw specification can be fetched at
+`http://localhost:8000/api/swagger.json`.
+
 Each documented route includes fields for path parameters and JSON bodies so you
 can easily try requests directly from the UI.
 
