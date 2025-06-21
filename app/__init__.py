@@ -1,5 +1,6 @@
 
 import os
+import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from .swagger import api
@@ -10,6 +11,10 @@ from .routes import bp as main_bp
 
 def create_app():
     app = Flask(__name__)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+    )
     default_db = "postgresql://postgres:postgres@localhost:5432/industria"
     database_uri = os.environ.get("DATABASE_URL", default_db)
     app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
