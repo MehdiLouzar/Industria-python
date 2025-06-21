@@ -1,9 +1,11 @@
 
+
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+
 from .routes import bp as main_bp
 
 def create_app():

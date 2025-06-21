@@ -20,4 +20,3 @@ class User(db.Model):
     role = db.relationship('Role', back_populates='users')
     appointments = db.relationship('Appointment', back_populates='user')
     activity_logs = db.relationship('ActivityLog', back_populates='user')
-
