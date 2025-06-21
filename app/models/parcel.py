@@ -16,6 +16,11 @@ class Parcel(SpatialEntity):
     CuS = db.Column(db.Numeric)
     photos = db.Column(ARRAY(db.Text))
 
-    zone = db.relationship('Zone', back_populates='parcels')
+    __mapper_args__ = {
+        'polymorphic_identity': 'parcel'
+    }
+
+    zone = db.relationship('Zone', back_populates='parcels',
+                           foreign_keys=[zone_id])
     appointments = db.relationship('Appointment', back_populates='parcel')
     amenities = db.relationship('ParcelAmenity', back_populates='parcel')
