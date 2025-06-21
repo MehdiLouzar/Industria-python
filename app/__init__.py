@@ -1,5 +1,6 @@
 
-import os
+    default_db = "postgresql://postgres:postgres@localhost:5432/industria"
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", default_db)
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
