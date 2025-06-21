@@ -29,13 +29,13 @@ def register_crud_routes(service: CRUDService, schema, endpoint):
     list_url = f'/{endpoint}'
     detail_url = f'/{endpoint}/<int:item_id>'
 
-    @bp.get(list_url)
+    @bp.get(list_url, endpoint=f'list_{endpoint}')
     @login_required
     def list_items(svc=service, schema=many_schema):
         items = svc.list()
         return jsonify(schema.dump(items))
 
-    @bp.post(list_url)
+    @bp.post(list_url, endpoint=f'create_{endpoint}')
     @login_required
     def create_item(svc=service, schema=single_schema):
         data = request.get_json() or {}
@@ -46,13 +46,13 @@ def register_crud_routes(service: CRUDService, schema, endpoint):
         obj = svc.create(obj)
         return jsonify(single_schema.dump(obj)), 201
 
-    @bp.get(detail_url)
+    @bp.get(detail_url, endpoint=f'get_{endpoint}')
     @login_required
     def get_item(item_id, svc=service, schema=single_schema):
         obj = svc.get_or_404(item_id)
         return jsonify(schema.dump(obj))
 
-    @bp.put(detail_url)
+    @bp.put(detail_url, endpoint=f'update_{endpoint}')
     @login_required
     def update_item(item_id, svc=service, schema=single_schema):
         obj = svc.get_or_404(item_id)
@@ -64,7 +64,7 @@ def register_crud_routes(service: CRUDService, schema, endpoint):
         obj = svc.update(obj)
         return jsonify(schema.dump(obj))
 
-    @bp.delete(detail_url)
+    @bp.delete(detail_url, endpoint=f'delete_{endpoint}')
     @login_required
     def delete_item(item_id, svc=service):
         obj = svc.get_or_404(item_id)
