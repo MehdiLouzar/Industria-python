@@ -1,0 +1,22 @@
+from geoalchemy2 import Geometry
+from .. import db
+from .spatial_entity import SpatialEntity
+
+class Zone(SpatialEntity):
+    __tablename__ = 'zones'
+    id = db.Column(db.Integer, db.ForeignKey('spatial_entities.id'), primary_key=True)
+
+    county_code = db.Column(db.String)
+    zone_type = db.Column(db.Integer)
+    zone_description = db.Column(db.String)
+    is_available = db.Column(db.Boolean, default=True)
+    region_id = db.Column(db.Integer, db.ForeignKey('regions.id'))
+    total_area = db.Column(db.Numeric)
+    total_parcels = db.Column(db.Integer)
+    available_parcels = db.Column(db.Integer)
+    color = db.Column(db.String)
+    centroid = db.Column(Geometry('GEOMETRY'))
+
+    region = db.relationship('Region', back_populates='zones')
+    parcels = db.relationship('Parcel', back_populates='zone')
+    activities = db.relationship('ZoneActivity', back_populates='zone')
