@@ -1,3 +1,4 @@
+
 from flask import Blueprint, jsonify, request, abort
 from . import db
 from .services import CRUDService, CountryService, RegionService, ZoneService, ParcelService, AppointmentService
@@ -140,4 +141,3 @@ def delete_parcel_amenity(parcel_id, amenity_id):
     obj = svc.get_or_404((parcel_id, amenity_id))
     svc.delete(obj)
     return '', 204
-
