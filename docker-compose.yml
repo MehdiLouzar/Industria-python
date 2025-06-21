@@ -9,8 +9,8 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
-      JWT_SECRET: your_jwt_access_secret
-      JWT_REFRESH_SECRET: your_jwt_refresh_secret
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
+      KEYCLOAK_AUDIENCE: account
 
   db:
     image: postgis/postgis:14-3.3

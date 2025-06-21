@@ -27,3 +27,15 @@ docker-compose up --build
 The Flask application will be available at `http://localhost:8000/`, the PostgreSQL database at `localhost:5432`, and Keycloak at `http://localhost:8080/`.
 
 Database tables are created automatically on first start using SQLAlchemy.
+
+### Authentication
+
+The application expects requests to include a JWT access token issued by
+Keycloak. Configure the Keycloak realm and client, then set the environment
+variables `KEYCLOAK_ISSUER` and `KEYCLOAK_AUDIENCE` (see `docker-compose.yml`).
+Routes are protected using these tokens via the provided decorators.
+
+## Schema
+
+The full database schema generated from the models is documented in [SCHEMA.md](SCHEMA.md).
+

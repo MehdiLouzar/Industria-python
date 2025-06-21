@@ -5,3 +5,6 @@ bcrypt
 marshmallow
 flask_sqlalchemy
 geoalchemy2
+marshmallow-sqlalchemy
+requests
+pytest
