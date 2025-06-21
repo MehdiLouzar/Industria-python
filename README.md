@@ -5,13 +5,16 @@ This repository provides a minimal example of how to containerize a Flask applic
 ## Structure
 
 ```
-./flask_app/
-    app.py            # Flask application
-    requirements.txt  # Python dependencies
-    Dockerfile        # Container image for the Flask app
-./db/init/script.sql  # Optional SQL script executed on DB start
-./docker-compose.yml  # Compose configuration
-Keycloak runs in its own container and exposes port 8080
+./app/                   # Flask application package
+    __init__.py         # create_app and blueprint registration
+    routes.py           # application routes
+    models/             # SQLAlchemy ORM classes
+    services/           # external logic services
+    decorators.py       # authentication decorators
+run.py                  # Entry point for the app
+Dockerfile              # Container image for the Flask app
+./db/init/script.sql    # Optional SQL script executed on DB start
+./docker-compose.yml    # Compose configuration
 ```
 
 ## Usage
@@ -21,6 +24,6 @@ Build and start the containers:
 ```bash
 docker-compose up --build
 ```
-
 The Flask application will be available at `http://localhost:8000/`, the PostgreSQL database at `localhost:5432`, and Keycloak at `http://localhost:8080/`.
 
+Database tables are created automatically on first start using SQLAlchemy.
