@@ -3,5 +3,4 @@ pyjwt
 psycopg2-binary
 bcrypt
 marshmallow
-flask_sqlalchemy
-geoalchemy2
+

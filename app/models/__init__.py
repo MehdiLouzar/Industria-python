@@ -1,3 +1,4 @@
+
 from .spatial_entity import SpatialEntity
 from .country import Country
 from .region import Region
@@ -18,3 +19,4 @@ __all__ = [
     'Amenity', 'Zone', 'Activity', 'Parcel', 'ActivityLog',
     'AppointmentStatus', 'Appointment', 'ZoneActivity', 'ParcelAmenity'
 ]
+
