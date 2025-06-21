@@ -1,6 +1,6 @@
+
 from flask import Blueprint, jsonify, request, abort
 from flask_restx import Resource
-
 from . import db
 from .decorators import login_required
 from .services import (
@@ -23,9 +23,19 @@ bp = Blueprint('main', __name__)
 api.init_app(bp)
 
 
+# Basic OpenAPI specification that will be populated dynamically when routes are
+# registered. Only minimal information is provided so that Swagger UI can
+# present the available endpoints.
+openapi_spec = {
+    "openapi": "3.0.0",
+    "info": {"title": "Industria API", "version": "1.0"},
+    "paths": {}
+}
+
 @bp.route('/')
 def index():
     return jsonify(message='Bonjour, Flask avec Docker !')
+
 
 
 def register_crud_routes(service: CRUDService, schema, endpoint: str):
