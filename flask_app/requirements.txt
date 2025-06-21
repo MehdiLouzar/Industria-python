@@ -1,5 +1,0 @@
-flask
-pyjwt
-psycopg2-binary
-bcrypt
-marshmallow
