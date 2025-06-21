@@ -25,7 +25,7 @@ Build and start the containers:
 docker-compose up --build
 ```
 The Flask application will be available at `http://localhost:8000/`, the PostgreSQL database at `localhost:5432`, and Keycloak at `http://localhost:8080/`.
-The default `DATABASE_URL` uses PostgreSQL so no SQLite database is created.
+The application relies entirely on PostgreSQL for persistence.
 
 Database tables are created automatically on first start using SQLAlchemy.
 

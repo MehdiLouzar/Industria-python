@@ -11,13 +11,13 @@ from .routes import bp as main_bp
 def create_app():
     app = Flask(__name__)
     default_db = "postgresql://postgres:postgres@localhost:5432/industria"
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", default_db)
+    database_uri = os.environ.get("DATABASE_URL", default_db)
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
 
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
     app.register_blueprint(main_bp)
-    api.init_app(app)
 
     with app.app_context():
         from . import models  # noqa: F401  ensure models are registered
