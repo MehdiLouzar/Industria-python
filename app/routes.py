@@ -15,7 +15,6 @@ from .schemas import (
     ParcelAmenitySchema
 )
 
-
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
