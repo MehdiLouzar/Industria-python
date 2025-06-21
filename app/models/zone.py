@@ -17,6 +17,11 @@ class Zone(SpatialEntity):
     color = db.Column(db.String)
     centroid = db.Column(Geometry('GEOMETRY'))
 
+    __mapper_args__ = {
+        'polymorphic_identity': 'zone'
+    }
+
     region = db.relationship('Region', back_populates='zones')
-    parcels = db.relationship('Parcel', back_populates='zone')
+    parcels = db.relationship('Parcel', back_populates='zone',
+                             foreign_keys='Parcel.zone_id')
     activities = db.relationship('ZoneActivity', back_populates='zone')

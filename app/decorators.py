@@ -33,4 +33,3 @@ def roles_required(role: str):
         return wrapped
 
     return decorator
-

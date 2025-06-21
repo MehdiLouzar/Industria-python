@@ -5,4 +5,3 @@ from .token_service import TokenService
 from .crud_service import CRUDService
 
 __all__ = ['AuthService', 'TokenService', 'CRUDService', 'CountryService', 'RegionService', 'ZoneService', 'ParcelService', 'AppointmentService']
-

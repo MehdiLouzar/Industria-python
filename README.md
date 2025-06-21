@@ -39,4 +39,3 @@ Routes are protected using these tokens via the provided decorators.
 ## Schema
 
 The full database schema generated from the models is documented in [SCHEMA.md](SCHEMA.md).
-
