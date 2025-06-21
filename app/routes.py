@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request, abort
 from flask_restx import Resource
-
 from . import db
 from .decorators import login_required
 from .services import (
@@ -20,12 +19,22 @@ from .schemas import (
 from .swagger import api
 
 bp = Blueprint('main', __name__)
+api.init_app(bp)
+
+
+# Basic OpenAPI specification that will be populated dynamically when routes are
+# registered. Only minimal information is provided so that Swagger UI can
+# present the available endpoints.
+openapi_spec = {
+    "openapi": "3.0.0",
+    "info": {"title": "Industria API", "version": "1.0"},
+    "paths": {}
+}
 
 
 @bp.route('/')
 def index():
     return jsonify(message='Bonjour, Flask avec Docker !')
-
 
 def register_crud_routes(service: CRUDService, schema, endpoint: str):
     """Register CRUD routes for a model on the given endpoint."""
@@ -95,6 +104,7 @@ register_crud_routes(CRUDService(AppointmentStatus), AppointmentStatusSchema, 'a
 register_crud_routes(AppointmentService(Appointment), AppointmentSchema, 'appointments')
 
 
+
 # Namespaces for association tables with composite keys
 zone_activity_ns = api.namespace('zone_activities', path='/zone_activities',
                                  description='Zone/Activity links')
@@ -120,7 +130,6 @@ class ZoneActivityList(Resource):
             abort(400, str(e))
         created = svc.create(obj)
         return ZoneActivitySchema().dump(created), 201
-
 
 @zone_activity_ns.route('/<int:zone_id>/<int:activity_id>')
 class ZoneActivityResource(Resource):
@@ -156,7 +165,6 @@ class ParcelAmenityList(Resource):
             abort(400, str(e))
         created = svc.create(obj)
         return ParcelAmenitySchema().dump(created), 201
-
 
 @parcel_amenity_ns.route('/<int:parcel_id>/<int:amenity_id>')
 class ParcelAmenityResource(Resource):
