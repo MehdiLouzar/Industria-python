@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #fff; }
+        .gradient-border {
+            border: 1px solid transparent;
+            border-radius: 0;
+            background-image: linear-gradient(90deg, #fff, #fff), linear-gradient(90deg, #f0c14b, #a16e2b);
+            background-clip: padding-box, border-box;
+            background-origin: border-box;
+        }
+        .title { letter-spacing: -0.4px; }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="flex items-center justify-center h-screen">
+    {% block content %}{% endblock %}
+    {% block scripts %}{% endblock %}
+</body>
+</html>
