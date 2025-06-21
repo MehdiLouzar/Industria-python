@@ -2,6 +2,7 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from .swagger import api
 
 db = SQLAlchemy()
 
@@ -16,6 +17,7 @@ def create_app():
 
     db.init_app(app)
     app.register_blueprint(main_bp)
+    api.init_app(app)
 
     with app.app_context():
         from . import models  # noqa: F401  ensure models are registered
