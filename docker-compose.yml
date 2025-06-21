@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  flask_app:
+    build: ./flask_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./flask_app:/app
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
+      JWT_SECRET: your_jwt_access_secret
+      JWT_REFRESH_SECRET: your_jwt_refresh_secret
+
+  db:
+    image: postgis/postgis:14-3.3
+    container_name: industria-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: industria
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command: start-dev
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
