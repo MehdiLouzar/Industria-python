@@ -55,7 +55,6 @@ def create_app():
     def inject_globals():
         return {"user": session.get("user"), "crud_resources": CRUD_RESOURCES}
 
-    # Demande loader: restaure current_user à partir de session['user']
     from .auth import SessionUser
 
     @login_manager.request_loader
