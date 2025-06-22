@@ -2,7 +2,7 @@ function getLabel(obj) {
   return obj.name || obj.label || obj.status_name || obj.code || obj.activities_key || obj.amenities_key || obj.id;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('crud-app');
   if (!container) return;
   const resource = container.dataset.resource;
@@ -21,6 +21,18 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentId = null;
   const ITEMS_PER_PAGE = 10;
   let currentPage = 1;
+  const selectMaps = {};
+
+  async function loadSelectMaps() {
+    const selects = cfg.fields.filter(f => f.type === 'select');
+    await Promise.all(selects.map(async f => {
+      const resp = await fetch(f.optionsEndpoint);
+      const data = await resp.json();
+      const map = {};
+      data.forEach(opt => { map[opt.id] = getLabel(opt); });
+      selectMaps[f.name] = map;
+    }));
+  }
 
   function closeModal() {
     modal.classList.add('hidden');
@@ -114,7 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const tr = document.createElement('tr');
       cfg.display.forEach(col => {
         const td = document.createElement('td');
-        td.textContent = item[col];
+        let value = item[col];
+        if (selectMaps[col]) {
+          value = selectMaps[col][value] ?? value;
+        }
+        td.textContent = value;
         td.className = 'px-3 py-2 text-sm text-gray-700';
         tr.appendChild(td);
       });
@@ -203,5 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('add-btn').addEventListener('click', () => openForm(null));
   saveBtn.addEventListener('click', (e) => { e.preventDefault(); saveItem(); });
 
+  await loadSelectMaps();
   fetchItems();
 });

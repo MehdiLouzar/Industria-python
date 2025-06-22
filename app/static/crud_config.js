@@ -38,8 +38,9 @@ const CRUD_CONFIG = {
     ]
   },
   zones: {
-    display: ['id', 'county_code', 'zone_type', 'zone_description', 'region_id'],
+    display: ['id', 'name', 'county_code', 'zone_type', 'zone_description', 'region_id'],
     fields: [
+      {name: 'name', label: 'Nom', type: 'text'},
       {name: 'county_code', label: 'Code département', type: 'text'},
       {name: 'zone_type', label: 'Type', type: 'number'},
       {name: 'zone_description', label: 'Description', type: 'text'},
