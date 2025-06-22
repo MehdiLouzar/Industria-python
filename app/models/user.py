@@ -9,7 +9,6 @@ class User(db.Model):
     first_name = db.Column(db.String)
     last_name = db.Column(db.String)
     email = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.Text)
     provider = db.Column(db.String)
     provider_id = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)

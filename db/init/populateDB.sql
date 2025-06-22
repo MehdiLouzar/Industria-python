@@ -76,51 +76,51 @@ INSERT INTO countries (id, name, code) VALUES (1, 'Maroc', 'MA') ON CONFLICT DO 
     
 
     INSERT INTO users (
-        id, first_name, last_name, email, password_hash,
+        id, first_name, last_name, email,
         provider, provider_id, is_active, activation_token, user_role
     ) VALUES (
         1, 'User1', 'Test1', 'user1@example.com',
-        'hashed_pwd', 'local', NULL, true, '', 
+        'local', NULL, true, '',
         (SELECT id FROM roles WHERE name = 'manager' LIMIT 1)
     ) ON CONFLICT DO NOTHING;
     
 
     INSERT INTO users (
-        id, first_name, last_name, email, password_hash,
+        id, first_name, last_name, email,
         provider, provider_id, is_active, activation_token, user_role
     ) VALUES (
         2, 'User2', 'Test2', 'user2@example.com',
-        'hashed_pwd', 'local', NULL, true, '', 
+        'local', NULL, true, '',
         (SELECT id FROM roles WHERE name = 'user' LIMIT 1)
     ) ON CONFLICT DO NOTHING;
     
 
     INSERT INTO users (
-        id, first_name, last_name, email, password_hash,
+        id, first_name, last_name, email,
         provider, provider_id, is_active, activation_token, user_role
     ) VALUES (
         3, 'User3', 'Test3', 'user3@example.com',
-        'hashed_pwd', 'local', NULL, true, '', 
+        'local', NULL, true, '',
         (SELECT id FROM roles WHERE name = 'user' LIMIT 1)
     ) ON CONFLICT DO NOTHING;
     
 
     INSERT INTO users (
-        id, first_name, last_name, email, password_hash,
+        id, first_name, last_name, email,
         provider, provider_id, is_active, activation_token, user_role
     ) VALUES (
         4, 'User4', 'Test4', 'user4@example.com',
-        'hashed_pwd', 'local', NULL, true, '', 
+        'local', NULL, true, '',
         (SELECT id FROM roles WHERE name = 'manager' LIMIT 1)
     ) ON CONFLICT DO NOTHING;
     
 
     INSERT INTO users (
-        id, first_name, last_name, email, password_hash,
+        id, first_name, last_name, email,
         provider, provider_id, is_active, activation_token, user_role
     ) VALUES (
         5, 'User5', 'Test5', 'user5@example.com',
-        'hashed_pwd', 'local', NULL, true, '', 
+        'local', NULL, true, '',
         (SELECT id FROM roles WHERE name = 'admin' LIMIT 1)
     ) ON CONFLICT DO NOTHING;
     

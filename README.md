@@ -39,12 +39,21 @@ the API. The raw specification can be fetched at
 Each documented route includes fields for path parameters and JSON bodies so you
 can easily try requests directly from the UI.
 
-### Authentication
+### Authentication and registration
 
 The application expects requests to include a JWT access token issued by
 Keycloak. Configure the Keycloak realm and client, then set the environment
 variables `KEYCLOAK_ISSUER` and `KEYCLOAK_AUDIENCE` (see `docker-compose.yml`).
 Routes are protected using these tokens via the provided decorators.
+
+To register a new account, send a POST request to `/register` with a JSON body
+containing `username`, `password`, `email` and optional `first_name` and
+`last_name`. The user is created in Keycloak and a linked entry is stored in the
+local database.
+
+When using `docker-compose up` a helper service runs `scripts/bootstrap_keycloak.py`
+after Keycloak starts to create a demo account automatically. You can log in
+with `demo` / `demo` immediately.
 
 ## Schema
 
