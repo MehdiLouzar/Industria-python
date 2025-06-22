@@ -15,7 +15,6 @@ import os
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_restx import Resource
 from . import db
-from .decorators import login_required
 from .services import LoginService, KeycloakAdminService
 from .services import (
     CRUDService,

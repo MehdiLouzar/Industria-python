@@ -12,3 +12,4 @@ flask-restx
 flask-cors
 python-keycloak
 flask-login
+shapely
