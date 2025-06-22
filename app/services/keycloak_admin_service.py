@@ -1,58 +1,84 @@
 import os
-import requests
+from keycloak import KeycloakAdmin
+from keycloak.exceptions import KeycloakAuthenticationError
 
 
 class KeycloakAdminService:
-    """Interact with Keycloak's admin API to manage users."""
-
     def __init__(self):
-        base = os.environ.get("KEYCLOAK_BASE_URL", "http://localhost:8080")
-        realm = os.environ.get("KEYCLOAK_REALM", "master")
-        self.realm = realm
-        self.base_url = base.rstrip('/')
-        self.token_endpoint = f"{self.base_url}/realms/{realm}/protocol/openid-connect/token"
-        self.users_endpoint = f"{self.base_url}/admin/realms/{realm}/users"
-        self.admin_user = os.environ.get("KEYCLOAK_ADMIN", "admin")
-        self.admin_password = os.environ.get("KEYCLOAK_ADMIN_PASSWORD", "admin")
+        self.server_url = os.getenv("KEYCLOAK_SERVER_URL", "http://keycloak:8080")
+        self.realm_name = os.getenv("KEYCLOAK_REALM", "master")
+        self.username = os.getenv("KEYCLOAK_ADMIN", "admin")
+        self.password = os.getenv("KEYCLOAK_ADMIN_PASSWORD", "admin")
+        self.client_id = "admin-cli"
 
-    def _admin_token(self) -> str:
-        data = {
-            "grant_type": "password",
-            "client_id": "admin-cli",
-            "username": self.admin_user,
-            "password": self.admin_password,
-        }
-        resp = requests.post(self.token_endpoint, data=data, timeout=5)
-        resp.raise_for_status()
-        return resp.json()["access_token"]
+        try:
+            self.keycloak_admin = KeycloakAdmin(
+                server_url=f"{self.server_url}/",
+                username=self.username,
+                password=self.password,
+                realm_name=self.realm_name,
+                client_id=self.client_id,
+                verify=True
+            )
+            print("✅ Connected to Keycloak admin API successfully.")
+        except KeycloakAuthenticationError as e:
+            print(f"❌ Authentication failed with Keycloak: {e}")
+            self.keycloak_admin = None
+        except Exception as e:
+            print(f"❌ Failed to connect to Keycloak: {e}")
+            self.keycloak_admin = None
 
     def user_exists(self, username: str) -> bool:
-        """Return True if a user with the given username exists."""
-        token = self._admin_token()
-        headers = {"Authorization": f"Bearer {token}"}
-        params = {"username": username, "exact": "true"}
-        resp = requests.get(self.users_endpoint, headers=headers, params=params, timeout=5)
-        resp.raise_for_status()
-        return len(resp.json()) > 0
+        if not self.keycloak_admin:
+            raise RuntimeError("Keycloak admin not initialized")
+        users = self.keycloak_admin.get_users({"username": username})
+        return any(user["username"] == username for user in users)
 
-    def create_user(self, username: str, email: str, first_name: str, last_name: str, password: str) -> str:
-        token = self._admin_token()
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "username": username,
+    def create_user(self, username: str, email: str, first_name: str, last_name: str, password: str) -> None:
+        if not self.keycloak_admin:
+            raise RuntimeError("Keycloak admin not initialized")
+        user = {
             "email": email,
+            "username": email,  # 👈 Important : email comme username
+            "enabled": True,
             "firstName": first_name,
             "lastName": last_name,
-            "enabled": True,
-            "credentials": [
-                {"type": "password", "value": password, "temporary": False}
-            ],
+            "emailVerified": True,
+            "credentials": [{
+                "type": "password",
+                "value": password,
+                "temporary": False
+            }]
         }
-        resp = requests.post(self.users_endpoint, json=payload, headers=headers, timeout=5)
-        resp.raise_for_status()
-        # Keycloak returns location header with user id
-        location = resp.headers.get("Location", "")
-        return location.rsplit('/', 1)[-1] if location else ""
+        self.keycloak_admin.create_user(user)
+
+    def client_exists(self, client_id: str) -> bool:
+        if not self.keycloak_admin:
+            raise RuntimeError("Keycloak admin not initialized")
+        clients = self.keycloak_admin.get_clients()
+        return any(client["clientId"] == client_id for client in clients)
+
+    def create_client(
+        self,
+        client_id: str,
+        name: str,
+        public_client: bool,
+        direct_access_grants_enabled: bool,
+        standard_flow_enabled: bool,
+        service_accounts_enabled: bool,
+    ) -> None:
+        if not self.keycloak_admin:
+            raise RuntimeError("Keycloak admin not initialized")
+        client_representation = {
+            "clientId": client_id,
+            "name": name,
+            "enabled": True,
+            "protocol": "openid-connect",
+            "publicClient": public_client,
+            "redirectUris": ["*"],
+            "directAccessGrantsEnabled": direct_access_grants_enabled,
+            "standardFlowEnabled": standard_flow_enabled,
+            "serviceAccountsEnabled": service_accounts_enabled,
+            "fullScopeAllowed": True,
+        }
+        self.keycloak_admin.create_client(client_representation)

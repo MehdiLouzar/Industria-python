@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %}</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Industria{% endblock %}</title>
+
+    <!-- Icônes -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+    <!-- Styles personnalisés -->
     <style>
         body { background-color: #fff; }
         .gradient-border {
@@ -17,10 +23,53 @@
         }
         .title { letter-spacing: -0.4px; }
     </style>
+
     {% block head %}{% endblock %}
 </head>
-<body class="flex items-center justify-center h-screen">
-    {% block content %}{% endblock %}
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md h-16 flex items-center">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+
+            <!-- Logo -->
+            <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
+                <span class="text-xl font-semibold text-gray-800">Industria</span>
+            </a>
+
+            <!-- Navigation -->
+            <nav class="flex space-x-6 text-gray-700 font-medium">
+                <a href="{{ url_for('main.index') }}" class="hover:text-indigo-600">Accueil</a>
+                <a href="#" class="hover:text-indigo-600">À propos</a>
+                <a href="#" class="hover:text-indigo-600">Services</a>
+            </nav>
+
+            <!-- Authentification -->
+            <div class="flex items-center space-x-4">
+                {% if user %}
+                    <span class="text-gray-700">{{ user['preferred_username'] }}</span>
+                    <form action="{{ url_for('main.logout') }}" method="post">
+                        <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
+                            Déconnexion
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('main.login_form') }}" class="bg-indigo-500 text-white px-4 py-1.5 rounded hover:bg-indigo-600 text-sm">
+                        Connexion
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Contenu principal -->
+    <main class="flex-grow container mx-auto px-6 mt-8">
+        {% block content %}{% endblock %}
+    </main>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

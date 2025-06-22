@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, request, abort, g, render_template
+from flask import Blueprint, jsonify, request, abort, g, render_template, session, redirect, url_for
+from flask_login import login_user, logout_user, login_required, current_user
 from flask_restx import Resource
 from . import db
 from .decorators import login_required
@@ -18,6 +19,7 @@ from .schemas import (
     ParcelAmenitySchema
 )
 from .swagger import api
+from .auth import SessionUser
 
 bp = Blueprint('main', __name__)
 api.init_app(bp)
@@ -35,7 +37,8 @@ openapi_spec = {
 
 @bp.route('/')
 def index():
-    return jsonify(message='Bonjour, Flask avec Docker !')
+    return render_template('home.html', user=session.get('user'))
+    #return jsonify(message='Bonjour, Flask avec Docker !')
 
 
 @bp.route('/login', methods=['GET'])
@@ -50,12 +53,23 @@ def login():
     username = data.get('username')
     password = data.get('password')
     if not username or not password:
-        abort(400, 'Missing credentials')
+        abort(400, "Missing credentials")
+
     svc = LoginService()
     try:
         tokens = svc.login(username, password)
-    except Exception as exc:  # pragma: no cover - pass through errors
+        # récupère les infos utilisateur (sub, preferred_username, email, etc.)
+        userinfo = svc.userinfo(tokens["access_token"])
+    except Exception as exc:
         abort(401, description=str(exc))
+
+    # stocke le profile dans la session
+    session["user"] = userinfo
+
+    # crée l’utilisateur pour Flask-Login et connecte-le
+    user = SessionUser(userinfo)
+    login_user(user)
+
     return jsonify(tokens)
 
 
@@ -86,20 +100,16 @@ def register():
     db.session.commit()
     return UserSchema().dump(user), 201
 
-
 @bp.route('/logout', methods=['POST'])
-@login_required
 def logout():
-    data = request.get_json() or {}
-    refresh_token = data.get('refresh_token')
-    if refresh_token:
-        svc = LoginService()
-        try:
-            svc.logout(refresh_token)
-        except Exception as exc:  # pragma: no cover - pass through errors
-            abort(400, description=str(exc))
+    # Déconnecte Flask-Login
+    logout_user()
+    # Nettoie ta session Keycloak
+    session.pop('user', None)
     g.pop('token_payload', None)
-    return jsonify(message='Logged out')
+    # Redirige vers la home
+    return redirect(url_for('main.index'))
+
 
 def register_crud_routes(service: CRUDService, schema, endpoint: str):
     """Register CRUD routes for a model on the given endpoint."""

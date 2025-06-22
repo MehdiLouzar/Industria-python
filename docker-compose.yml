@@ -10,8 +10,9 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
       KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
-      KEYCLOAK_AUDIENCE: account
-      KEYCLOAK_CLIENT_ID: account
+      KEYCLOAK_AUDIENCE: industria
+      KEYCLOAK_CLIENT_ID: industria
+      KEYCLOAK_CLIENT_SECRET: Xs39j88XrJADBTdvFwt89NfjryHQHtqy
 
   db:
     image: postgis/postgis:14-3.3
@@ -37,10 +38,31 @@ services:
       - "8080:8080"
 
   keycloak_bootstrap:
-    build: .
-    command: sh -c "sleep 20 && python scripts/bootstrap_keycloak.py"
+    build:
+      context: .
+      dockerfile: Dockerfile.bootstrap
+    command: >
+      sh -c "
+        until pg_isready -h db -p 5432; do
+          echo '⏳ Waiting for PostgreSQL...';
+          sleep 3;
+        done &&
+        until curl -f http://keycloak:8080/realms/master; do
+          echo '⏳ Waiting for Keycloak...';
+          sleep 5;
+        done &&
+        python scripts/bootstrap_keycloak.py
+      "
     depends_on:
       - keycloak
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: master
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      
 
 volumes:
   pgdata:
