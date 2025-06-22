@@ -1,27 +1,64 @@
-from flask import Blueprint, jsonify, request, abort, g, render_template, session, redirect, url_for
+from flask import (
+    Blueprint,
+    jsonify,
+    request,
+    abort,
+    g,
+    render_template,
+    session,
+    redirect,
+    url_for,
+    current_app,
+)
+from werkzeug.utils import secure_filename
+import os
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_restx import Resource
 from . import db
 from .decorators import login_required
 from .services import LoginService, KeycloakAdminService
 from .services import (
-    CRUDService, CountryService, RegionService, ZoneService, ParcelService,
-    AppointmentService
+    CRUDService,
+    CountryService,
+    RegionService,
+    ZoneService,
+    ParcelService,
+    AppointmentService,
 )
 from .models import (
-    Country, Region, Role, User, Amenity, Zone, Activity, Parcel, ActivityLog,
-    AppointmentStatus, Appointment, ZoneActivity, ParcelAmenity
+    Country,
+    Region,
+    Role,
+    User,
+    Amenity,
+    Zone,
+    Activity,
+    Parcel,
+    ActivityLog,
+    AppointmentStatus,
+    Appointment,
+    ZoneActivity,
+    ParcelAmenity,
 )
 from .schemas import (
-    CountrySchema, RegionSchema, RoleSchema, UserSchema, AmenitySchema,
-    ZoneSchema, ActivitySchema, ParcelSchema, ActivityLogSchema,
-    AppointmentStatusSchema, AppointmentSchema, ZoneActivitySchema,
-    ParcelAmenitySchema
+    CountrySchema,
+    RegionSchema,
+    RoleSchema,
+    UserSchema,
+    AmenitySchema,
+    ZoneSchema,
+    ActivitySchema,
+    ParcelSchema,
+    ActivityLogSchema,
+    AppointmentStatusSchema,
+    AppointmentSchema,
+    ZoneActivitySchema,
+    ParcelAmenitySchema,
 )
 from .swagger import api
 from .auth import SessionUser
 
-bp = Blueprint('main', __name__)
+bp = Blueprint("main", __name__)
 api.init_app(bp)
 
 
@@ -31,27 +68,27 @@ api.init_app(bp)
 openapi_spec = {
     "openapi": "3.0.0",
     "info": {"title": "Industria API", "version": "1.0"},
-    "paths": {}
+    "paths": {},
 }
 
 
-@bp.route('/')
+@bp.route("/")
 def index():
-    return render_template('home.html', user=session.get('user'))
-    #return jsonify(message='Bonjour, Flask avec Docker !')
+    return render_template("home.html", user=session.get("user"))
+    # return jsonify(message='Bonjour, Flask avec Docker !')
 
 
-@bp.route('/login', methods=['GET'])
+@bp.route("/login", methods=["GET"])
 def login_form():
     """Render the login page."""
-    return render_template('login.html')
+    return render_template("login.html")
 
 
-@bp.route('/login', methods=['POST'])
+@bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json() or {}
-    username = data.get('username')
-    password = data.get('password')
+    username = data.get("username")
+    password = data.get("password")
     if not username or not password:
         abort(400, "Missing credentials")
 
@@ -73,17 +110,17 @@ def login():
     return jsonify(tokens)
 
 
-@bp.route('/register', methods=['POST'])
+@bp.route("/register", methods=["POST"])
 def register():
     """Create a user in Keycloak and link it in the local database."""
     data = request.get_json() or {}
-    username = data.get('username')
-    password = data.get('password')
-    email = data.get('email')
-    first = data.get('first_name')
-    last = data.get('last_name')
+    username = data.get("username")
+    password = data.get("password")
+    email = data.get("email")
+    first = data.get("first_name")
+    last = data.get("last_name")
     if not username or not password or not email:
-        abort(400, 'Missing credentials')
+        abort(400, "Missing credentials")
     svc = KeycloakAdminService()
     try:
         kc_id = svc.create_user(username, email, first, last, password)
@@ -93,34 +130,36 @@ def register():
         first_name=first,
         last_name=last,
         email=email,
-        provider='keycloak',
+        provider="keycloak",
         provider_id=kc_id,
     )
     db.session.add(user)
     db.session.commit()
     return UserSchema().dump(user), 201
 
-@bp.route('/logout', methods=['POST'])
+
+@bp.route("/logout", methods=["POST"])
 def logout():
     # Déconnecte Flask-Login
     logout_user()
     # Nettoie ta session Keycloak
-    session.pop('user', None)
-    g.pop('token_payload', None)
+    session.pop("user", None)
+    g.pop("token_payload", None)
     # Redirige vers la home
-    return redirect(url_for('main.index'))
+    return redirect(url_for("main.index"))
 
 
 def register_crud_routes(service: CRUDService, schema, endpoint: str):
     """Register CRUD routes for a model on the given endpoint."""
     single_schema = schema()
     many_schema = schema(many=True)
-    ns = api.namespace(endpoint, path=f'/{endpoint}',
-                       description=f'Operations on {endpoint}')
+    ns = api.namespace(
+        endpoint, path=f"/{endpoint}", description=f"Operations on {endpoint}"
+    )
 
-    payload_model = ns.schema_model(f'{endpoint}_payload', {'type': 'object'})
+    payload_model = ns.schema_model(f"{endpoint}_payload", {"type": "object"})
 
-    @ns.route('/')
+    @ns.route("/")
     class ListResource(Resource):
         @login_required
         def get(self, svc=service, schema=many_schema):
@@ -138,7 +177,7 @@ def register_crud_routes(service: CRUDService, schema, endpoint: str):
             created = svc.create(obj)
             return schema.dump(created), 201
 
-    @ns.route('/<int:item_id>')
+    @ns.route("/<int:item_id>")
     class DetailResource(Resource):
         @login_required
         def get(self, item_id, svc=service, schema=single_schema):
@@ -151,8 +190,7 @@ def register_crud_routes(service: CRUDService, schema, endpoint: str):
             obj = svc.get_or_404(item_id)
             data = request.get_json() or {}
             try:
-                obj = schema.load(data, instance=obj, partial=True,
-                                  session=db.session)
+                obj = schema.load(data, instance=obj, partial=True, session=db.session)
             except Exception as e:
                 abort(400, str(e))
             updated = svc.update(obj)
@@ -162,31 +200,35 @@ def register_crud_routes(service: CRUDService, schema, endpoint: str):
         def delete(self, item_id, svc=service):
             obj = svc.get_or_404(item_id)
             svc.delete(obj)
-            return '', 204
+            return "", 204
 
 
 # Register CRUD routes for models with simple integer primary keys
-register_crud_routes(CountryService(Country), CountrySchema, 'countries')
-register_crud_routes(RegionService(Region), RegionSchema, 'regions')
-register_crud_routes(CRUDService(Role), RoleSchema, 'roles')
-register_crud_routes(CRUDService(User), UserSchema, 'users')
-register_crud_routes(CRUDService(Amenity), AmenitySchema, 'amenities')
-register_crud_routes(ZoneService(Zone), ZoneSchema, 'zones')
-register_crud_routes(CRUDService(Activity), ActivitySchema, 'activities')
-register_crud_routes(ParcelService(Parcel), ParcelSchema, 'parcels')
-register_crud_routes(CRUDService(ActivityLog), ActivityLogSchema, 'activity_logs')
-register_crud_routes(CRUDService(AppointmentStatus), AppointmentStatusSchema, 'appointment_statuses')
-register_crud_routes(AppointmentService(Appointment), AppointmentSchema, 'appointments')
-
+register_crud_routes(CountryService(Country), CountrySchema, "countries")
+register_crud_routes(RegionService(Region), RegionSchema, "regions")
+register_crud_routes(CRUDService(Role), RoleSchema, "roles")
+register_crud_routes(CRUDService(User), UserSchema, "users")
+register_crud_routes(CRUDService(Amenity), AmenitySchema, "amenities")
+register_crud_routes(ZoneService(Zone), ZoneSchema, "zones")
+register_crud_routes(CRUDService(Activity), ActivitySchema, "activities")
+register_crud_routes(ParcelService(Parcel), ParcelSchema, "parcels")
+register_crud_routes(CRUDService(ActivityLog), ActivityLogSchema, "activity_logs")
+register_crud_routes(
+    CRUDService(AppointmentStatus), AppointmentStatusSchema, "appointment_statuses"
+)
+register_crud_routes(AppointmentService(Appointment), AppointmentSchema, "appointments")
 
 
 # Namespaces for association tables with composite keys
-zone_activity_ns = api.namespace('zone_activities', path='/zone_activities',
-                                 description='Zone/Activity links')
-zone_activity_payload = zone_activity_ns.schema_model('ZoneActivityPayload', {'type': 'object'})
+zone_activity_ns = api.namespace(
+    "zone_activities", path="/zone_activities", description="Zone/Activity links"
+)
+zone_activity_payload = zone_activity_ns.schema_model(
+    "ZoneActivityPayload", {"type": "object"}
+)
 
 
-@zone_activity_ns.route('/')
+@zone_activity_ns.route("/")
 class ZoneActivityList(Resource):
     @login_required
     def get(self):
@@ -206,22 +248,26 @@ class ZoneActivityList(Resource):
         created = svc.create(obj)
         return ZoneActivitySchema().dump(created), 201
 
-@zone_activity_ns.route('/<int:zone_id>/<int:activity_id>')
+
+@zone_activity_ns.route("/<int:zone_id>/<int:activity_id>")
 class ZoneActivityResource(Resource):
     @login_required
     def delete(self, zone_id, activity_id):
         svc = CRUDService(ZoneActivity)
         obj = svc.get_or_404((zone_id, activity_id))
         svc.delete(obj)
-        return '', 204
+        return "", 204
 
 
-parcel_amenity_ns = api.namespace('parcel_amenities', path='/parcel_amenities',
-                                  description='Parcel/Amenity links')
-parcel_amenity_payload = parcel_amenity_ns.schema_model('ParcelAmenityPayload', {'type': 'object'})
+parcel_amenity_ns = api.namespace(
+    "parcel_amenities", path="/parcel_amenities", description="Parcel/Amenity links"
+)
+parcel_amenity_payload = parcel_amenity_ns.schema_model(
+    "ParcelAmenityPayload", {"type": "object"}
+)
 
 
-@parcel_amenity_ns.route('/')
+@parcel_amenity_ns.route("/")
 class ParcelAmenityList(Resource):
     @login_required
     def get(self):
@@ -241,11 +287,79 @@ class ParcelAmenityList(Resource):
         created = svc.create(obj)
         return ParcelAmenitySchema().dump(created), 201
 
-@parcel_amenity_ns.route('/<int:parcel_id>/<int:amenity_id>')
+
+@parcel_amenity_ns.route("/<int:parcel_id>/<int:amenity_id>")
 class ParcelAmenityResource(Resource):
     @login_required
     def delete(self, parcel_id, amenity_id):
         svc = CRUDService(ParcelAmenity)
         obj = svc.get_or_404((parcel_id, amenity_id))
         svc.delete(obj)
-        return '', 204
+        return "", 204
+
+
+# --- File upload endpoints -------------------------------------------------
+
+
+@bp.route("/api/parcels/<int:parcel_id>/photo", methods=["POST"])
+@login_required
+def upload_parcel_photo(parcel_id):
+    """Upload one or more photos for a parcel."""
+    svc = ParcelService(Parcel)
+    parcel = svc.get_or_404(parcel_id)
+    if "file" not in request.files:
+        abort(400, "No file part")
+    files = request.files.getlist("file")
+    upload_dir = current_app.config["UPLOAD_FOLDER"]
+    paths = []
+    for file in files:
+        if file.filename == "":
+            continue
+        fname = secure_filename(file.filename)
+        dest = os.path.join(upload_dir, fname)
+        file.save(dest)
+        paths.append("uploads/" + fname)
+    parcel.photos = (parcel.photos or []) + paths
+    db.session.commit()
+    return jsonify({"photos": parcel.photos})
+
+
+@bp.route("/api/amenities/<int:amenity_id>/icon", methods=["POST"])
+@login_required
+def upload_amenity_icon(amenity_id):
+    """Upload icon for an amenity."""
+    svc = CRUDService(Amenity)
+    amenity = svc.get_or_404(amenity_id)
+    if "file" not in request.files:
+        abort(400, "No file part")
+    file = request.files["file"]
+    fname = secure_filename(file.filename)
+    dest = os.path.join(current_app.config["UPLOAD_FOLDER"], fname)
+    file.save(dest)
+    amenity.icon = "uploads/" + fname
+    db.session.commit()
+    return jsonify({"icon": amenity.icon})
+
+
+@bp.route("/api/activities/<int:activity_id>/icon", methods=["POST"])
+@login_required
+def upload_activity_icon(activity_id):
+    """Upload icon for an activity."""
+    svc = CRUDService(Activity)
+    activity = svc.get_or_404(activity_id)
+    if "file" not in request.files:
+        abort(400, "No file part")
+    file = request.files["file"]
+    fname = secure_filename(file.filename)
+    dest = os.path.join(current_app.config["UPLOAD_FOLDER"], fname)
+    file.save(dest)
+    activity.icon = "uploads/" + fname
+    db.session.commit()
+    return jsonify({"icon": activity.icon})
+
+
+@bp.route("/manage/<resource>")
+@login_required
+def manage_resource(resource):
+    """Generic HTML page for CRUD management."""
+    return render_template("crud.html", resource=resource)
