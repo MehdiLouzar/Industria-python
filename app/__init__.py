@@ -68,7 +68,7 @@ def create_app():
     app.register_blueprint(main_bp)
 
     with app.app_context():
-        from . import models 
+        from . import models  # noqa: F401  ensure models are registered
 
         db.create_all()
 
