@@ -25,6 +25,15 @@ class KeycloakAdminService:
         resp = requests.post(self.token_endpoint, data=data, timeout=5)
         resp.raise_for_status()
         return resp.json()["access_token"]
+      
+    def user_exists(self, username: str) -> bool:
+        """Return True if a user with the given username exists."""
+        token = self._admin_token()
+        headers = {"Authorization": f"Bearer {token}"}
+        params = {"username": username, "exact": "true"}
+        resp = requests.get(self.users_endpoint, headers=headers, params=params, timeout=5)
+        resp.raise_for_status()
+        return len(resp.json()) > 0
 
     def create_user(self, username: str, email: str, first_name: str, last_name: str, password: str) -> str:
         token = self._admin_token()

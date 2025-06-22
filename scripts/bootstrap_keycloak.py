@@ -5,14 +5,17 @@ from app.services.keycloak_admin_service import KeycloakAdminService
 def main():
     svc = KeycloakAdminService()
     try:
-        svc.create_user(
-            username="demo",
-            email="demo@example.com",
-            first_name="Demo",
-            last_name="User",
-            password="demo"
-        )
-        print("Created demo user in Keycloak")
+        if not svc.user_exists("demo"):
+            svc.create_user(
+                username="demo",
+                email="demo@example.com",
+                first_name="Demo",
+                last_name="User",
+                password="demo"
+            )
+            print("Created demo user in Keycloak")
+        else:
+            print("Demo user already exists")
     except Exception as exc:
         print(f"Could not create demo user: {exc}")
 
