@@ -10,7 +10,13 @@ class LoginService:
         issuer = issuer.rstrip("/")
         self.token_endpoint = f"{issuer}/protocol/openid-connect/token"
         self.logout_endpoint = f"{issuer}/protocol/openid-connect/logout"
-        self.client_id = os.environ.get("KEYCLOAK_CLIENT_ID", "industria")
+        # Default to the audience client used for token validation if no
+        # specific client id is provided. This avoids login errors when the
+        # `industria` client does not exist in a fresh Keycloak setup.
+        self.client_id = os.environ.get(
+            "KEYCLOAK_CLIENT_ID",
+            os.environ.get("KEYCLOAK_AUDIENCE", "account"),
+        )
         self.client_secret = os.environ.get("KEYCLOAK_CLIENT_SECRET")
 
     def login(self, username: str, password: str) -> dict:

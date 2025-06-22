@@ -45,7 +45,6 @@ Base table used for spatial objects. Other spatial models inherit from this tabl
 | first_name       | String    |                                    |
 | last_name        | String    |                                    |
 | email            | String    | Unique, required                   |
-| password_hash    | Text      |                                    |
 | provider         | String    | External provider                  |
 | provider_id      | Text      |                                    |
 | is_active        | Boolean   | Defaults to true                   |

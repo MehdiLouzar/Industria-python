@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, abort, g, render_template
 from flask_restx import Resource
 from . import db
 from .decorators import login_required
-from .services import LoginService
+from .services import LoginService, KeycloakAdminService
 from .services import (
     CRUDService, CountryService, RegionService, ZoneService, ParcelService,
     AppointmentService
@@ -57,6 +57,34 @@ def login():
     except Exception as exc:  # pragma: no cover - pass through errors
         abort(401, description=str(exc))
     return jsonify(tokens)
+
+
+@bp.route('/register', methods=['POST'])
+def register():
+    """Create a user in Keycloak and link it in the local database."""
+    data = request.get_json() or {}
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+    first = data.get('first_name')
+    last = data.get('last_name')
+    if not username or not password or not email:
+        abort(400, 'Missing credentials')
+    svc = KeycloakAdminService()
+    try:
+        kc_id = svc.create_user(username, email, first, last, password)
+    except Exception as exc:  # pragma: no cover - pass through errors
+        abort(400, description=str(exc))
+    user = User(
+        first_name=first,
+        last_name=last,
+        email=email,
+        provider='keycloak',
+        provider_id=kc_id,
+    )
+    db.session.add(user)
+    db.session.commit()
+    return UserSchema().dump(user), 201
 
 
 @bp.route('/logout', methods=['POST'])
