@@ -439,4 +439,3 @@ FROM ins;
         'Demande de RDV', '+21261234564',
         'Company4', 'Directeur'
     ) ON CONFLICT DO NOTHING;
-    
