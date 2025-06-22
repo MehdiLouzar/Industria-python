@@ -44,6 +44,14 @@
                 <a href="{{ url_for('main.index') }}" class="hover:text-indigo-600">Accueil</a>
                 <a href="#" class="hover:text-indigo-600">À propos</a>
                 <a href="#" class="hover:text-indigo-600">Services</a>
+                <div class="relative group">
+                    <a href="#" class="hover:text-indigo-600">Gestion</a>
+                    <div class="absolute hidden group-hover:block bg-white border mt-2 shadow-lg">
+                        {% for r in crud_resources %}
+                        <a href="{{ url_for('main.manage_resource', resource=r) }}" class="block px-4 py-2 text-sm hover:bg-gray-100 capitalize">{{ r.replace('_', ' ') }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
             </nav>
 
             <!-- Authentification -->

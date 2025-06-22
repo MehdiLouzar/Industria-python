@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion {{ resource }}{% endblock %}
+
+{% block content %}
+<div id="crud-app" data-resource="{{ resource }}">
+<div class="mb-4 flex justify-between items-center">
+  <h1 class="text-2xl font-bold capitalize">{{ resource }}</h1>
+  <button id="add-btn" class="bg-green-600 text-white px-4 py-2 rounded">Ajouter</button>
+</div>
+<div id="table-container" class="overflow-x-auto"></div>
+
+<!-- Modal -->
+<div id="form-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+  <div class="bg-white p-6 rounded w-full max-w-lg">
+    <h2 id="form-title" class="text-xl font-bold mb-4"></h2>
+    <form id="item-form" class="space-y-4"></form>
+    <div class="flex justify-end space-x-2 mt-4">
+      <button id="cancel-btn" class="px-4 py-2 bg-gray-300 rounded">Annuler</button>
+      <button id="save-btn" class="px-4 py-2 bg-blue-600 text-white rounded">Enregistrer</button>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='crud_config.js') }}"></script>
+<script src="{{ url_for('static', filename='crud.js') }}"></script>
+{% endblock %}
