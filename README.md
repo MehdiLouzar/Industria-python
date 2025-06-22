@@ -46,6 +46,30 @@ Keycloak. Configure the Keycloak realm and client, then set the environment
 variables `KEYCLOAK_ISSUER` and `KEYCLOAK_AUDIENCE` (see `docker-compose.yml`).
 Routes are protected using these tokens via the provided decorators.
 
+Before starting the containers you must create a Keycloak client for the
+application. The client identifier must match the `KEYCLOAK_CLIENT_ID`
+environment variable (defaults to `industria`). Enable **Direct access grants**
+so that the password grant works. If the client is set to **confidential**, copy
+the generated secret and provide it using `KEYCLOAK_CLIENT_SECRET`.
+
+Example steps on a fresh Keycloak installation:
+
+1. Log in to `http://localhost:8080/admin` with the credentials from
+   `docker-compose.yml` (`admin` / `admin`).
+2. Navigate to **Clients** and choose **Create client**.
+3. Select **OpenID Connect**, use `industria` as the Client ID and continue.
+4. On the **Capability** tab enable **Direct access grants**. Optionally enable
+   **Client authentication** to make the client confidential and obtain its
+   secret.
+
+The resulting environment variables can be set in `docker-compose.yml`:
+
+```yaml
+environment:
+  KEYCLOAK_CLIENT_ID: industria
+  # KEYCLOAK_CLIENT_SECRET: <only if client is confidential>
+```
+
 To register a new account, send a POST request to `/register` with a JSON body
 containing `username`, `password`, `email` and optional `first_name` and
 `last_name`. The user is created in Keycloak and a linked entry is stored in the
