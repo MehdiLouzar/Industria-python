@@ -8,13 +8,11 @@ token_service = TokenService()
 
 
 class AuthService:
-    """Authenticate incoming requests using Keycloak JWTs."""
 
     def __init__(self, token_svc: TokenService = token_service):
         self.token_service = token_svc
 
     def authenticate_request(self) -> dict:
-        """Validate Authorization header and store payload in ``g``."""
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             abort(401)

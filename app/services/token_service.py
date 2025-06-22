@@ -5,7 +5,6 @@ from jwt import PyJWKClient
 
 
 class TokenService:
-    """Handle retrieval and verification of JWT tokens from Keycloak."""
 
     def __init__(self):
         issuer = os.environ.get("KEYCLOAK_ISSUER", "http://localhost:8080/realms/master")

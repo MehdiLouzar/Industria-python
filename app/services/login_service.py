@@ -5,7 +5,6 @@ import requests
 from typing import Dict
 
 class LoginService:
-    """Obtain and revoke tokens from Keycloak, plus userinfo."""
 
     def __init__(self):
         issuer = os.environ.get("KEYCLOAK_ISSUER", "http://localhost:8080/realms/master").rstrip("/")
