@@ -35,7 +35,6 @@ class User {
   +first_name: String
   +last_name: String
   +email: String
-  +password_hash: Text
   +provider: String
   +provider_id: Text
   +is_active: Boolean
