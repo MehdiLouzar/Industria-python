@@ -9,3 +9,4 @@ marshmallow-sqlalchemy
 requests
 pytest
 flask-restx
+flask-cors

@@ -16,13 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(data);
                 alert('Connexion réussie');
             } else {
-                alert('Échec de la connexion');
+                alert('Utilisateur ou mot de passe incorrect');
             }
         } catch (err) {
             console.error(err);
             alert('Erreur lors de la connexion');
         }
     });
+
     if (window.lucide) {
         window.lucide.createIcons();
     }
