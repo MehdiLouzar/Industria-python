@@ -51,8 +51,9 @@ containing `username`, `password`, `email` and optional `first_name` and
 `last_name`. The user is created in Keycloak and a linked entry is stored in the
 local database.
 
-You can also run `python scripts/bootstrap_keycloak.py` once the Keycloak
-container is up to create a demo user automatically.
+When using `docker-compose up` a helper service runs `scripts/bootstrap_keycloak.py`
+after Keycloak starts to create a demo account automatically. You can log in
+with `demo` / `demo` immediately.
 
 ## Schema
 
