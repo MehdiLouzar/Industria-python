@@ -16,17 +16,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('item-form');
   const formTitle = document.getElementById('form-title');
   const cancelBtn = document.getElementById('cancel-btn');
+  const closeBtn = document.getElementById('close-btn');
   const saveBtn = document.getElementById('save-btn');
   let allItems = [];
   let currentId = null;
   const ITEMS_PER_PAGE = 10;
   let currentPage = 1;
   const selectMaps = {};
+  const labelMap = {};
+  cfg.fields.forEach(f => { labelMap[f.name] = f.label || f.name; });
 
   async function loadSelectMaps() {
     const selects = cfg.fields.filter(f => f.type === 'select');
     await Promise.all(selects.map(async f => {
-      const resp = await fetch(f.optionsEndpoint);
+      const resp = await fetch(f.optionsEndpoint, {credentials: 'same-origin'});
       const data = await resp.json();
       const map = {};
       data.forEach(opt => { map[opt.id] = getLabel(opt); });
@@ -41,17 +44,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     closeModal();
   });
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeModal();
+    });
+  }
 
-  async function loadOptions(field, selectEl) {
+  async function loadOptions(field, selectEl, selectedValue) {
     if (!field.optionsEndpoint) return;
-    const resp = await fetch(field.optionsEndpoint);
+    let url = field.optionsEndpoint;
+    if (field.dependsOn) {
+      const depVal = form.querySelector(`[name="${field.dependsOn}"]`).value;
+      if (!depVal) {
+        selectEl.innerHTML = '';
+        return;
+      }
+      url = url.replace(`$${field.dependsOn}`, depVal);
+    }
+    const resp = await fetch(url, {credentials: 'same-origin'});
     const data = await resp.json();
+    selectEl.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = '';
+    selectEl.appendChild(empty);
     data.forEach(opt => {
       const option = document.createElement('option');
       option.value = opt.id;
       option.textContent = getLabel(opt);
       selectEl.appendChild(option);
     });
+    if (selectedValue !== undefined && selectedValue !== null) {
+      selectEl.value = selectedValue;
+    }
   }
 
   function renderForm(item) {
@@ -66,7 +92,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (f.type === 'select') {
         input = document.createElement('select');
         input.className = 'w-full border border-gray-300 p-2 rounded';
-        loadOptions(f, input);
+        if (f.dependsOn) {
+          input.disabled = true;
+          const depEl = form.querySelector(`[name="${f.dependsOn}"]`);
+          const update = async () => {
+            await loadOptions(f, input, item ? item[f.name] : null);
+            input.disabled = false;
+          };
+          depEl.addEventListener('change', update);
+          if (depEl && depEl.value) update();
+        } else {
+          loadOptions(f, input, item ? item[f.name] : null);
+        }
       } else if (f.type === 'checkbox') {
         input = document.createElement('input');
         input.type = 'checkbox';
@@ -76,10 +113,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         input.type = 'file';
         if (f.multiple) input.multiple = true;
         input.className = 'w-full';
+        const preview = document.createElement('div');
+        preview.className = 'flex flex-wrap gap-2 mt-2';
+        const existing = [];
+        if (item && item[f.name]) {
+          if (Array.isArray(item[f.name])) existing.push(...item[f.name]);
+          else existing.push(item[f.name]);
+        }
+        input.dataset.existing = JSON.stringify(existing);
+        function renderPreviews() {
+          preview.innerHTML = '';
+          existing.forEach((path, idx) => {
+            const holder = document.createElement('div');
+            holder.className = 'relative inline-block';
+            const img = document.createElement('img');
+            img.className = 'h-20 w-20 object-cover rounded';
+            img.src = '/static/' + path;
+            const rm = document.createElement('button');
+            rm.type = 'button';
+            rm.innerHTML = '&times;';
+            rm.className = 'absolute -top-1 -right-1 bg-white rounded-full text-red-600 text-xs';
+            rm.addEventListener('click', () => {
+              existing.splice(idx, 1);
+              input.dataset.existing = JSON.stringify(existing);
+              renderPreviews();
+            });
+            holder.appendChild(img);
+            holder.appendChild(rm);
+            preview.appendChild(holder);
+          });
+          Array.from(input.files).forEach((file, idx) => {
+            const holder = document.createElement('div');
+            holder.className = 'relative inline-block';
+            const img = document.createElement('img');
+            img.className = 'h-20 w-20 object-cover rounded';
+            img.src = URL.createObjectURL(file);
+            const rm = document.createElement('button');
+            rm.type = 'button';
+            rm.innerHTML = '&times;';
+            rm.className = 'absolute -top-1 -right-1 bg-white rounded-full text-red-600 text-xs';
+            rm.addEventListener('click', () => {
+              const dt = new DataTransfer();
+              Array.from(input.files).forEach((f, i) => {
+                if (i !== idx) dt.items.add(f);
+              });
+              input.files = dt.files;
+              renderPreviews();
+            });
+            holder.appendChild(img);
+            holder.appendChild(rm);
+            preview.appendChild(holder);
+          });
+        }
+        input.addEventListener('change', renderPreviews);
+        renderPreviews();
+        wrapper.appendChild(input);
+        wrapper.appendChild(preview);
       } else {
         input = document.createElement('input');
         input.type = f.type || 'text';
         input.className = 'w-full border border-gray-300 p-2 rounded';
+      }
+      if (f.type !== 'file') {
+        wrapper.appendChild(input);
       }
       input.name = f.name;
       if (item && item[f.name] !== undefined) {
@@ -89,13 +185,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           input.value = item[f.name];
         }
       }
-      wrapper.appendChild(input);
       form.appendChild(wrapper);
     });
   }
 
   async function fetchItems() {
-    const resp = await fetch('/api/' + resource + '/');
+    const resp = await fetch('/api/' + resource + '/', {credentials: 'same-origin'});
     allItems = await resp.json();
     renderTable();
   }
@@ -109,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const headRow = document.createElement('tr');
     cfg.display.forEach(col => {
       const th = document.createElement('th');
-      th.textContent = col;
+      th.textContent = labelMap[col] || col.replace(/_/g, ' ');
       th.className = 'px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase';
       headRow.appendChild(th);
     });
@@ -169,6 +264,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     formTitle.textContent = item ? 'Modifier' : 'Créer';
     renderForm(item);
     modal.classList.remove('hidden');
+    if (resource === 'zones' && item && item.region_id) {
+      const countrySelect = form.querySelector('[name="country_id"]');
+      const regionSelect = form.querySelector('[name="region_id"]');
+      fetch('/api/regions/' + item.region_id, {credentials: 'same-origin'})
+        .then(r => r.json())
+        .then(region => {
+          countrySelect.value = region.country_id;
+          countrySelect.dispatchEvent(new Event('change'));
+        });
+    }
   }
 
   async function saveItem() {
@@ -177,9 +282,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     cfg.fields.forEach(f => {
       const el = form.querySelector(`[name="${f.name}"]`);
       if (!el) return;
+      if (f.transient) return;
       if (f.type === 'checkbox') {
         data[f.name] = el.checked;
       } else if (f.type === 'file') {
+        const existing = JSON.parse(el.dataset.existing || '[]');
+        if (f.multiple) {
+          data[f.name] = existing;
+        } else {
+          data[f.name] = existing[0] || null;
+        }
         if (el.files.length) {
           filesToUpload.push({field: f, input: el});
         }
@@ -192,7 +304,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resp = await fetch(url, {
       method: method,
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      credentials: 'same-origin'
     });
     if (resp.ok) {
       const saved = await resp.json();
@@ -201,18 +314,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const fd = new FormData();
         Array.from(item.input.files).forEach(f => fd.append('file', f));
         const urlUpload = item.field.uploadEndpoint.replace('$id', itemId);
-        await fetch(urlUpload, {method: 'POST', body: fd});
+        await fetch(urlUpload, {method: 'POST', body: fd, credentials: 'same-origin'});
       }
       closeModal();
       fetchItems();
     } else {
-      alert('Erreur lors de la sauvegarde');
+      const msg = await resp.text();
+      alert('Erreur lors de la sauvegarde: ' + msg);
     }
   }
 
   async function deleteItem(id) {
     if (!confirm('Supprimer cet élément ?')) return;
-    await fetch('/api/' + resource + '/' + id, { method: 'DELETE' });
+    await fetch('/api/' + resource + '/' + id, { method: 'DELETE', credentials: 'same-origin' });
     fetchItems();
   }
 
