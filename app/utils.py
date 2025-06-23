@@ -13,6 +13,8 @@ def point_from_lambert(x, y):
     return from_shape(pt, srid=4326)
 
 def lambert_from_point(pt):
-    """Return (x, y) Lambert-93 coordinates from a Shapely point."""
+    """Return (x, y) Lambert-93 coordinates from a Shapely geometry."""
+    if not hasattr(pt, "x") or not hasattr(pt, "y"):
+        pt = pt.centroid
     x, y = _to_lambert.transform(pt.x, pt.y)
     return x, y
