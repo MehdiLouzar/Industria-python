@@ -11,7 +11,6 @@ class ParcelSchema(SQLAlchemyAutoSchema):
     area = fields.Float()
     CoS = fields.Float(attribute="CoS")  # ou 'CoS' si c'est bien le nom de l'attribut
     CuS = fields.Float(attribute="CuS")  # pareil pour 'CuS'
-    
     geometry = fields.Method("get_geometry", deserialize="pass_through")
     lambert_x = fields.Method("get_lambert_x", dump_only=True, allow_none=True)
     lambert_y = fields.Method("get_lambert_y", dump_only=True, allow_none=True)
