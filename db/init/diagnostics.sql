@@ -33,10 +33,9 @@ SELECT * FROM appointments         LIMIT 5;
 --   )
 --   RETURNING id, geometry
 -- )
--- INSERT INTO zones (county_code, zone_type, region_id, total_area)
+-- INSERT INTO zones (zone_type_id, region_id, total_area)
 -- SELECT
---   'MA-RB',
---   1,
+--   (SELECT id FROM zone_types WHERE name = 'privée'),
 --   (SELECT id FROM regions WHERE name = 'Rabat-Salé-Kénitra'),
 --   ST_Area(geometry::geography)/10000.0
 -- FROM ins;

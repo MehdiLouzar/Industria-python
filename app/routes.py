@@ -31,6 +31,7 @@ from .models import (
     User,
     Amenity,
     Zone,
+    ZoneType,
     Activity,
     Parcel,
     ActivityLog,
@@ -46,6 +47,7 @@ from .schemas import (
     UserSchema,
     AmenitySchema,
     ZoneSchema,
+    ZoneTypeSchema,
     ActivitySchema,
     ParcelSchema,
     ActivityLogSchema,
@@ -208,6 +210,7 @@ register_crud_routes(RegionService(Region), RegionSchema, "regions")
 register_crud_routes(CRUDService(Role), RoleSchema, "roles")
 register_crud_routes(CRUDService(User), UserSchema, "users")
 register_crud_routes(CRUDService(Amenity), AmenitySchema, "amenities")
+register_crud_routes(CRUDService(ZoneType), ZoneTypeSchema, "zone_types")
 register_crud_routes(ZoneService(Zone), ZoneSchema, "zones")
 register_crud_routes(CRUDService(Activity), ActivitySchema, "activities")
 register_crud_routes(ParcelService(Parcel), ParcelSchema, "parcels")

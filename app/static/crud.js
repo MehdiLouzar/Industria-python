@@ -29,7 +29,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadSelectMaps() {
     const selects = cfg.fields.filter(f => f.type === 'select');
     await Promise.all(selects.map(async f => {
-      const resp = await fetch(f.optionsEndpoint, {credentials: 'same-origin'});
+      let url = f.mapEndpoint || f.optionsEndpoint;
+      if (!url) return;
+      // Remove placeholder if present
+      if (url.includes('$')) {
+        url = url.replace(/\$[^/]+/, '').replace(/\/\//g, '/');
+      }
+      const resp = await fetch(url, {credentials: 'same-origin'});
+      if (!resp.ok) return;
+      
       const data = await resp.json();
       const map = {};
       data.forEach(opt => { map[opt.id] = getLabel(opt); });
