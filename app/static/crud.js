@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       const resp = await fetch(url, {credentials: 'same-origin'});
       if (!resp.ok) return;
+      
       const data = await resp.json();
       const map = {};
       data.forEach(opt => { map[opt.id] = getLabel(opt); });
