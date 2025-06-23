@@ -217,6 +217,13 @@ register_crud_routes(
 )
 register_crud_routes(AppointmentService(Appointment), AppointmentSchema, "appointments")
 
+# Endpoint to list regions for a given country
+@bp.route("/api/countries/<int:country_id>/regions")
+@login_required
+def regions_by_country(country_id):
+    regions = Region.query.filter_by(country_id=country_id).all()
+    return RegionSchema(many=True).dump(regions)
+
 
 # Namespaces for association tables with composite keys
 zone_activity_ns = api.namespace(
