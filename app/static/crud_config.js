@@ -50,8 +50,10 @@ const CRUD_CONFIG = {
       {name: 'total_area', label: 'Superficie totale', type: 'number'},
       {name: 'total_parcels', label: 'Parcelles totales', type: 'number'},
       {name: 'available_parcels', label: 'Parcelles dispo', type: 'number'},
-      {name: 'color', label: 'Couleur', type: 'text'}
-    ]
+      {name: 'color', label: 'Couleur', type: 'text'},
+      {name: 'lambert_x', label: 'Lambert X', type: 'number'},
+      {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
+      ]
   },
   activities: {
     display: ['id', 'label'],
@@ -71,8 +73,10 @@ const CRUD_CONFIG = {
       {name: 'is_showroom', label: 'Showroom', type: 'checkbox'},
       {name: 'CoS', label: 'CoS', type: 'number'},
       {name: 'CuS', label: 'CuS', type: 'number'},
-      {name: 'photos', label: 'Photos', type: 'file', multiple: true, uploadEndpoint: '/api/parcels/$id/photo'}
-    ]
+      {name: 'photos', label: 'Photos', type: 'file', multiple: true, uploadEndpoint: '/api/parcels/$id/photo'},
+      {name: 'lambert_x', label: 'Lambert X', type: 'number'},
+      {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
+      ]
   },
   activity_logs: {
     display: ['id', 'user_id', 'action', 'target', 'timestamp'],
