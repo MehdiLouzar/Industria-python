@@ -30,6 +30,8 @@ class ZoneSchema(SQLAlchemyAutoSchema):
         return shapely_geom.__geo_interface__
 
     def get_centroid(self, obj):
+        if obj.centroid is None:
+            return None
         shapely_centroid = to_shape(obj.centroid)
         return shapely_centroid.__geo_interface__
 
@@ -38,7 +40,9 @@ class ZoneSchema(SQLAlchemyAutoSchema):
         x = data.pop("lambert_x", None)
         y = data.pop("lambert_y", None)
         if x is not None and y is not None:
-            data["geometry"] = point_from_lambert(x, y)
+            geom = point_from_lambert(x, y)
+            data["geometry"] = geom
+            data["centroid"] = geom
         return data
 
     def pass_through(self, value):
