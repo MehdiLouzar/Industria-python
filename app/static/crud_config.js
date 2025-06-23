@@ -45,12 +45,15 @@ const CRUD_CONFIG = {
       {name: 'zone_type', label: 'Type', type: 'number'},
       {name: 'zone_description', label: 'Description', type: 'text'},
       {name: 'is_available', label: 'Disponible', type: 'checkbox'},
-      {name: 'region_id', label: 'Région', type: 'select', optionsEndpoint: '/api/regions'},
+      {name: 'country_id', label: 'Pays', type: 'select', optionsEndpoint: '/api/countries', transient: true},
+      {name: 'region_id', label: 'Région', type: 'select', optionsEndpoint: '/api/countries/$country_id/regions', dependsOn: 'country_id'},
       {name: 'total_area', label: 'Superficie totale', type: 'number'},
       {name: 'total_parcels', label: 'Parcelles totales', type: 'number'},
       {name: 'available_parcels', label: 'Parcelles dispo', type: 'number'},
-      {name: 'color', label: 'Couleur', type: 'text'}
-    ]
+      {name: 'color', label: 'Couleur', type: 'text'},
+      {name: 'lambert_x', label: 'Lambert X', type: 'number'},
+      {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
+      ]
   },
   activities: {
     display: ['id', 'label'],
@@ -70,8 +73,10 @@ const CRUD_CONFIG = {
       {name: 'is_showroom', label: 'Showroom', type: 'checkbox'},
       {name: 'CoS', label: 'CoS', type: 'number'},
       {name: 'CuS', label: 'CuS', type: 'number'},
-      {name: 'photos', label: 'Photos', type: 'file', multiple: true, uploadEndpoint: '/api/parcels/$id/photo'}
-    ]
+      {name: 'photos', label: 'Photos', type: 'file', multiple: true, uploadEndpoint: '/api/parcels/$id/photo'},
+      {name: 'lambert_x', label: 'Lambert X', type: 'number'},
+      {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
+      ]
   },
   activity_logs: {
     display: ['id', 'user_id', 'action', 'target', 'timestamp'],
