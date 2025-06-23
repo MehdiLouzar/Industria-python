@@ -9,7 +9,7 @@ class ZoneSchema(SQLAlchemyAutoSchema):
     total_area = fields.Float()
 
     # Sérialisation de la géométrie héritée (SpatialEntity.geometry)
-    geometry = fields.Method("get_geometry", dump_only=True)
+    geometry = fields.Method("get_geometry", deserialize="pass_through")
     # Sérialisation du centroïde
     centroid = fields.Method("get_centroid", dump_only=True)
     lambert_x = fields.Method("get_lambert_x", dump_only=True, allow_none=True)
@@ -38,6 +38,9 @@ class ZoneSchema(SQLAlchemyAutoSchema):
         if x is not None and y is not None:
             data["geometry"] = point_from_lambert(x, y)
         return data
+
+    def pass_through(self, value):
+        return value
 
     def get_lambert_x(self, obj):
         if obj.geometry is None:
