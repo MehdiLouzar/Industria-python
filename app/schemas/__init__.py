@@ -5,6 +5,7 @@ from .role_schema import RoleSchema
 from .user_schema import UserSchema
 from .amenity_schema import AmenitySchema
 from .zone_schema import ZoneSchema
+from .zone_type_schema import ZoneTypeSchema
 from .activity_schema import ActivitySchema
 from .parcel_schema import ParcelSchema
 from .activity_log_schema import ActivityLogSchema
@@ -15,7 +16,7 @@ from .parcel_amenity_schema import ParcelAmenitySchema
 
 __all__ = [
     'SpatialEntitySchema', 'CountrySchema', 'RegionSchema', 'RoleSchema', 'UserSchema',
-    'AmenitySchema', 'ZoneSchema', 'ActivitySchema', 'ParcelSchema',
+    'AmenitySchema', 'ZoneSchema', 'ZoneTypeSchema', 'ActivitySchema', 'ParcelSchema',
     'ActivityLogSchema', 'AppointmentStatusSchema', 'AppointmentSchema',
     'ZoneActivitySchema', 'ParcelAmenitySchema'
 ]

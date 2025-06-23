@@ -28,6 +28,9 @@ The Flask application will be available at `http://localhost:8000/`, the Postgre
 The application relies entirely on PostgreSQL for persistence.
 
 Database tables are created automatically on first start using SQLAlchemy.
+If you started the application before the `zone_types` table was added,
+execute `db/init/upgrade_zone_types.sql` against your database to create the
+new table and column.
 
 ### API documentation
 
