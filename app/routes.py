@@ -31,6 +31,7 @@ from .models import (
     User,
     Amenity,
     Zone,
+    ZoneType,
     Activity,
     Parcel,
     ActivityLog,
@@ -46,6 +47,7 @@ from .schemas import (
     UserSchema,
     AmenitySchema,
     ZoneSchema,
+    ZoneTypeSchema,
     ActivitySchema,
     ParcelSchema,
     ActivityLogSchema,
@@ -208,6 +210,7 @@ register_crud_routes(RegionService(Region), RegionSchema, "regions")
 register_crud_routes(CRUDService(Role), RoleSchema, "roles")
 register_crud_routes(CRUDService(User), UserSchema, "users")
 register_crud_routes(CRUDService(Amenity), AmenitySchema, "amenities")
+register_crud_routes(CRUDService(ZoneType), ZoneTypeSchema, "zone_types")
 register_crud_routes(ZoneService(Zone), ZoneSchema, "zones")
 register_crud_routes(CRUDService(Activity), ActivitySchema, "activities")
 register_crud_routes(ParcelService(Parcel), ParcelSchema, "parcels")
@@ -216,6 +219,13 @@ register_crud_routes(
     CRUDService(AppointmentStatus), AppointmentStatusSchema, "appointment_statuses"
 )
 register_crud_routes(AppointmentService(Appointment), AppointmentSchema, "appointments")
+
+# Endpoint to list regions for a given country
+@bp.route("/api/countries/<int:country_id>/regions")
+@login_required
+def regions_by_country(country_id):
+    regions = Region.query.filter_by(country_id=country_id).all()
+    return RegionSchema(many=True).dump(regions)
 
 
 # Namespaces for association tables with composite keys

@@ -61,13 +61,19 @@ Base table used for spatial objects. Other spatial models inherit from this tabl
 | label         | String  |             |
 | icon          | Text    |             |
 
+## ZoneType
+
+| Column | Type    | Notes       |
+| ------ | ------- | ----------- |
+| id     | Integer | Primary key |
+| name   | String  | Unique      |
+
 ## Zone (inherits `SpatialEntity`)
 
 | Column            | Type      | Notes                             |
 | ----------------- | --------- | --------------------------------- |
 | id                | Integer   | Primary key / FK to `spatial_entities.id` |
-| county_code       | String    |                                   |
-| zone_type         | Integer   |                                   |
+| zone_type_id      | Integer   | Foreign key to `zone_types.id`    |
 | zone_description  | String    |                                   |
 | is_available      | Boolean   | Defaults to true                  |
 | region_id         | Integer   | Foreign key to `regions.id`       |
