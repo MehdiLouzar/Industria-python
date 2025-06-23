@@ -115,8 +115,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         input.className = 'w-full';
         const preview = document.createElement('div');
         preview.className = 'flex flex-wrap gap-2 mt-2';
+        const existing = [];
+        if (item && item[f.name]) {
+          if (Array.isArray(item[f.name])) existing.push(...item[f.name]);
+          else existing.push(item[f.name]);
+        }
+        input.dataset.existing = JSON.stringify(existing);
         function renderPreviews() {
           preview.innerHTML = '';
+          existing.forEach((path, idx) => {
+            const holder = document.createElement('div');
+            holder.className = 'relative inline-block';
+            const img = document.createElement('img');
+            img.className = 'h-20 w-20 object-cover rounded';
+            img.src = '/static/' + path;
+            const rm = document.createElement('button');
+            rm.type = 'button';
+            rm.innerHTML = '&times;';
+            rm.className = 'absolute -top-1 -right-1 bg-white rounded-full text-red-600 text-xs';
+            rm.addEventListener('click', () => {
+              existing.splice(idx, 1);
+              input.dataset.existing = JSON.stringify(existing);
+              renderPreviews();
+            });
+            holder.appendChild(img);
+            holder.appendChild(rm);
+            preview.appendChild(holder);
+          });
           Array.from(input.files).forEach((file, idx) => {
             const holder = document.createElement('div');
             holder.className = 'relative inline-block';
@@ -141,6 +166,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
         input.addEventListener('change', renderPreviews);
+        renderPreviews();
         wrapper.appendChild(input);
         wrapper.appendChild(preview);
       } else {
@@ -260,6 +286,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (f.type === 'checkbox') {
         data[f.name] = el.checked;
       } else if (f.type === 'file') {
+        const existing = JSON.parse(el.dataset.existing || '[]');
+        if (f.multiple) {
+          data[f.name] = existing;
+        } else {
+          data[f.name] = existing[0] || null;
+        }
         if (el.files.length) {
           filesToUpload.push({field: f, input: el});
         }
