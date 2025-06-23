@@ -16,12 +16,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('item-form');
   const formTitle = document.getElementById('form-title');
   const cancelBtn = document.getElementById('cancel-btn');
+  const closeBtn = document.getElementById('close-btn');
   const saveBtn = document.getElementById('save-btn');
   let allItems = [];
   let currentId = null;
   const ITEMS_PER_PAGE = 10;
   let currentPage = 1;
   const selectMaps = {};
+  const labelMap = {};
+  cfg.fields.forEach(f => { labelMap[f.name] = f.label || f.name; });
 
   async function loadSelectMaps() {
     const selects = cfg.fields.filter(f => f.type === 'select');
@@ -41,11 +44,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     closeModal();
   });
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeModal();
+    });
+  }
 
   async function loadOptions(field, selectEl) {
     if (!field.optionsEndpoint) return;
-    const resp = await fetch(field.optionsEndpoint);
+    let url = field.optionsEndpoint;
+    if (field.dependsOn) {
+      const depVal = form.querySelector(`[name="${field.dependsOn}"]`).value;
+      if (!depVal) {
+        selectEl.innerHTML = '';
+        return;
+      }
+      url = url.replace(`$${field.dependsOn}`, depVal);
+    }
+    const resp = await fetch(url);
     const data = await resp.json();
+    selectEl.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = '';
+    selectEl.appendChild(empty);
     data.forEach(opt => {
       const option = document.createElement('option');
       option.value = opt.id;
@@ -66,7 +89,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (f.type === 'select') {
         input = document.createElement('select');
         input.className = 'w-full border border-gray-300 p-2 rounded';
-        loadOptions(f, input);
+        if (f.dependsOn) {
+          input.disabled = true;
+          const depEl = form.querySelector(`[name="${f.dependsOn}"]`);
+          const update = async () => {
+            await loadOptions(f, input);
+            input.disabled = false;
+            if (item && item[f.name]) {
+              input.value = item[f.name];
+            }
+          };
+          depEl.addEventListener('change', update);
+          if (depEl && depEl.value) update();
+        } else {
+          loadOptions(f, input);
+        }
       } else if (f.type === 'checkbox') {
         input = document.createElement('input');
         input.type = 'checkbox';
@@ -76,10 +113,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         input.type = 'file';
         if (f.multiple) input.multiple = true;
         input.className = 'w-full';
+        const preview = document.createElement('div');
+        preview.className = 'flex flex-wrap gap-2 mt-2';
+        function renderPreviews() {
+          preview.innerHTML = '';
+          Array.from(input.files).forEach((file, idx) => {
+            const holder = document.createElement('div');
+            holder.className = 'relative inline-block';
+            const img = document.createElement('img');
+            img.className = 'h-20 w-20 object-cover rounded';
+            img.src = URL.createObjectURL(file);
+            const rm = document.createElement('button');
+            rm.type = 'button';
+            rm.innerHTML = '&times;';
+            rm.className = 'absolute -top-1 -right-1 bg-white rounded-full text-red-600 text-xs';
+            rm.addEventListener('click', () => {
+              const dt = new DataTransfer();
+              Array.from(input.files).forEach((f, i) => {
+                if (i !== idx) dt.items.add(f);
+              });
+              input.files = dt.files;
+              renderPreviews();
+            });
+            holder.appendChild(img);
+            holder.appendChild(rm);
+            preview.appendChild(holder);
+          });
+        }
+        input.addEventListener('change', renderPreviews);
+        wrapper.appendChild(input);
+        wrapper.appendChild(preview);
       } else {
         input = document.createElement('input');
         input.type = f.type || 'text';
         input.className = 'w-full border border-gray-300 p-2 rounded';
+      }
+      if (f.type !== 'file') {
+        wrapper.appendChild(input);
       }
       input.name = f.name;
       if (item && item[f.name] !== undefined) {
@@ -89,7 +159,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           input.value = item[f.name];
         }
       }
-      wrapper.appendChild(input);
       form.appendChild(wrapper);
     });
   }
@@ -109,7 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const headRow = document.createElement('tr');
     cfg.display.forEach(col => {
       const th = document.createElement('th');
-      th.textContent = col;
+      th.textContent = labelMap[col] || col.replace(/_/g, ' ');
       th.className = 'px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase';
       headRow.appendChild(th);
     });
@@ -169,6 +238,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     formTitle.textContent = item ? 'Modifier' : 'Créer';
     renderForm(item);
     modal.classList.remove('hidden');
+    if (resource === 'zones') {
+      const countrySelect = form.querySelector('[name="country_id"]');
+      const regionSelect = form.querySelector('[name="region_id"]');
+      regionSelect.disabled = true;
+      if (item && item.region_id) {
+        fetch('/api/regions/' + item.region_id)
+          .then(r => r.json())
+          .then(region => {
+            countrySelect.value = region.country_id;
+            countrySelect.dispatchEvent(new Event('change'));
+            setTimeout(() => { regionSelect.value = item.region_id; }, 300);
+          });
+      }
+    }
   }
 
   async function saveItem() {
@@ -177,6 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     cfg.fields.forEach(f => {
       const el = form.querySelector(`[name="${f.name}"]`);
       if (!el) return;
+      if (f.transient) return;
       if (f.type === 'checkbox') {
         data[f.name] = el.checked;
       } else if (f.type === 'file') {
