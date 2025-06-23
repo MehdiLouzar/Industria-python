@@ -41,18 +41,16 @@
 
             <!-- Navigation -->
             <nav class="flex space-x-6 text-gray-700 font-medium">
-                <a href="{{ url_for('main.index') }}" class="hover:text-indigo-600">Accueil</a>
-                <a href="#" class="hover:text-indigo-600">À propos</a>
-                <a href="#" class="hover:text-indigo-600">Services</a>
-                {% for r in crud_resources %}
-                <a href="{{ url_for('main.manage_resource', resource=r) }}" class="hover:text-indigo-600 capitalize">{{ r.replace('_', ' ') }}</a>
-                {% endfor %}
+                {% if user %}
+                    {% for r in crud_resources %}
+                    <a href="{{ url_for('main.manage_resource', resource=r) }}" class="hover:text-indigo-600 capitalize">{{ r.replace('_', ' ') }}</a>
+                    {% endfor %}
+                {% endif %}
             </nav>
 
             <!-- Authentification -->
             <div class="flex items-center space-x-4">
                 {% if user %}
-                    <span class="text-gray-700">{{ user['preferred_username'] }}</span>
                     <form action="{{ url_for('main.logout') }}" method="post">
                         <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
                             Déconnexion
