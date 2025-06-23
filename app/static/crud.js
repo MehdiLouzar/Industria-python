@@ -123,6 +123,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         input.dataset.existing = JSON.stringify(existing);
         function renderPreviews() {
           preview.innerHTML = '';
+          if (!f.multiple && input.files.length) {
+            existing.splice(0);
+            input.dataset.existing = JSON.stringify(existing);
+          }
           existing.forEach((path, idx) => {
             const holder = document.createElement('div');
             holder.className = 'relative inline-block';

@@ -5,6 +5,8 @@ from ..models import Zone
 from ..utils import point_from_lambert, lambert_from_point
 
 class ZoneSchema(SQLAlchemyAutoSchema):
+    id = fields.Int(dump_only=True)
+    entity_type = fields.Str(dump_only=True)
     # Conversion du total_area (Numeric) en float
     total_area = fields.Float()
 
