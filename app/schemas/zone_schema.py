@@ -1,14 +1,10 @@
 from marshmallow import fields, pre_load
-from marshmallow import fields, pre_load
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from geoalchemy2.shape import to_shape
 from ..models import Zone
 from ..utils import point_from_lambert, lambert_from_point
-from ..utils import point_from_lambert, lambert_from_point
 
 class ZoneSchema(SQLAlchemyAutoSchema):
-    id = fields.Int(dump_only=True)
-    entity_type = fields.Str(dump_only=True)
     id = fields.Int(dump_only=True)
     entity_type = fields.Str(dump_only=True)
     # Conversion du total_area (Numeric) en float
@@ -16,13 +12,8 @@ class ZoneSchema(SQLAlchemyAutoSchema):
 
     # Sérialisation de la géométrie héritée (SpatialEntity.geometry)
     geometry = fields.Method("get_geometry", deserialize="pass_through")
-    geometry = fields.Method("get_geometry", deserialize="pass_through")
     # Sérialisation du centroïde
     centroid = fields.Method("get_centroid", dump_only=True)
-    lambert_x = fields.Method("get_lambert_x", dump_only=True, allow_none=True)
-    lambert_y = fields.Method("get_lambert_y", dump_only=True, allow_none=True)
-    lambert_x_input = fields.Float(load_only=True, data_key="lambert_x")
-    lambert_y_input = fields.Float(load_only=True, data_key="lambert_y")
     lambert_x = fields.Method("get_lambert_x", dump_only=True, allow_none=True)
     lambert_y = fields.Method("get_lambert_y", dump_only=True, allow_none=True)
     lambert_x_input = fields.Float(load_only=True, data_key="lambert_x")
@@ -41,8 +32,6 @@ class ZoneSchema(SQLAlchemyAutoSchema):
     def get_centroid(self, obj):
         if obj.centroid is None:
             return None
-        if obj.centroid is None:
-            return None
         shapely_centroid = to_shape(obj.centroid)
         return shapely_centroid.__geo_interface__
 
@@ -53,7 +42,6 @@ class ZoneSchema(SQLAlchemyAutoSchema):
         if x is not None and y is not None:
             geom = point_from_lambert(x, y)
             data["geometry"] = geom
-            data["centroid"] = geom
         return data
 
     def pass_through(self, value):

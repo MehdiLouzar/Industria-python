@@ -40,7 +40,7 @@ class ZoneService(CRUDService):
     def create(self, obj):
         if obj.region_id and not Region.query.get(obj.region_id):
             abort(400, "Region not found")
-        if obj.geometry is not None and obj.centroid is None:
+        if obj.geometry is not None:
             shp = to_shape(obj.geometry)
             obj.centroid = from_shape(shp.centroid, srid=4326)
         return super().create(obj)
