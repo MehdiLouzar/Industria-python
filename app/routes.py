@@ -96,15 +96,11 @@ def login():
     svc = LoginService()
     try:
         tokens = svc.login(username, password)
-        # récupère les infos utilisateur (sub, preferred_username, email, etc.)
         userinfo = svc.userinfo(tokens["access_token"])
     except Exception as exc:
         abort(401, description=str(exc))
-
-    # stocke le profile dans la session
+        
     session["user"] = userinfo
-
-    # crée l’utilisateur pour Flask-Login et connecte-le
     user = SessionUser(userinfo)
     login_user(user)
 

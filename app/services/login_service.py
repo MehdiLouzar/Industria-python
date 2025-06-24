@@ -15,7 +15,7 @@ class LoginService:
         self.logout_endpoint = f"{issuer}/protocol/openid-connect/logout"
         self.userinfo_endpoint = f"{issuer}/protocol/openid-connect/userinfo"
 
-        self.client_id = os.environ.get("KEYCLOAK_CLIENT_ID", "account")
+        self.client_id = os.environ.get("KEYCLOAK_CLIENT_ID", "industria")
         self.client_secret = os.environ.get("KEYCLOAK_CLIENT_SECRET")
 
     def login(self, username: str, password: str) -> Dict[str, str]:

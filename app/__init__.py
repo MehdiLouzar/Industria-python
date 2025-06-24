@@ -69,5 +69,9 @@ def create_app():
     db.init_app(app)
     app.register_blueprint(main_bp)
 
+    with app.app_context():
+        from . import models
+        db.create_all()
+
     login_manager.init_app(app)
     return app

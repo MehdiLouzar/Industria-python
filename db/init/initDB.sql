@@ -1,25 +1,27 @@
--- initDB.sql
+-- db/init/initDB.sql
 -- Reset the database and populate demo data for Industria
 
-TRUNCATE TABLE
-  zone_activities,
-  parcel_amenities,
-  appointments,
-  parcels,
-  zones,
-  zone_types,
-  activities,
-  amenities,
-  appointment_status,
-  regions,
-  countries,
-  roles,
-  users,
-  activity_logs,
-  spatial_entities
-RESTART IDENTITY CASCADE;
-
-CREATE EXTENSION IF NOT EXISTS postgis;
+DO
+$$
+DECLARE
+  tbl text;
+  tables text[] := ARRAY[
+    'zone_activities','parcel_amenities','appointments','parcels',
+    'zones','zone_types','activities','amenities',
+    'appointment_status','regions','countries','roles',
+    'users','activity_logs','spatial_entities'
+  ];
+BEGIN
+  FOREACH tbl IN ARRAY tables LOOP
+    IF to_regclass('public.' || tbl) IS NOT NULL THEN
+      EXECUTE format(
+        'TRUNCATE TABLE public.%I RESTART IDENTITY CASCADE',
+        tbl
+      );
+    END IF;
+  END LOOP;
+END
+$$;
 
 -- Basic reference data
 INSERT INTO countries (id, name, code) VALUES
@@ -88,13 +90,9 @@ WITH ins AS (
 )
 INSERT INTO zones (
   id, zone_type_id, is_available,
-  id, zone_type_id, is_available,
   region_id, total_area, total_parcels, available_parcels, color, centroid
 )
 SELECT
-  ins.id,
-  (SELECT id FROM zone_types WHERE name = 'privée'),
-  TRUE,
   ins.id,
   (SELECT id FROM zone_types WHERE name = 'privée'),
   TRUE,
@@ -107,10 +105,6 @@ FROM ins;
 DO $$
 DECLARE
   zone_id integer := (
-    SELECT z.id
-    FROM zones z
-    JOIN spatial_entities se ON se.id = z.id
-    WHERE se.name = 'Zone A'
     SELECT z.id
     FROM zones z
     JOIN spatial_entities se ON se.id = z.id

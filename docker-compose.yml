@@ -12,9 +12,12 @@ services:
       KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
       KEYCLOAK_AUDIENCE: industria
       KEYCLOAK_CLIENT_ID: industria
-      KEYCLOAK_CLIENT_SECRET: Xs39j88XrJADBTdvFwt89NfjryHQHtqy
+      KEYCLOAK_CLIENT_SECRET: aIq8Fhb6mvS8FCVYEzEzA1wuDmoK0MRD
 
   db:
+    build:
+      context: .
+      dockerfile: Dockerfile-db
     image: postgis/postgis:14-3.3
     container_name: industria-database
     restart: unless-stopped

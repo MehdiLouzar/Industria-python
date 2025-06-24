@@ -13,7 +13,6 @@ class SpatialEntity(db.Model):
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.Text)
     geometry = db.Column(Geometry(geometry_type='GEOMETRY', srid=4326))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     __mapper_args__ = {
         'polymorphic_on': entity_type,
