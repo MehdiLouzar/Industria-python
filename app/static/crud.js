@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const form      = document.getElementById('item-form');
   const formTitle = document.getElementById('form-title');
   const cancelBtn = document.getElementById('cancel-btn');
+  const deleteBtn = document.getElementById('delete-btn');
   const closeBtn  = document.getElementById('close-btn');
   const saveBtn   = document.getElementById('save-btn');
 
@@ -60,6 +61,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     modal.classList.add('hidden');
   }
   cancelBtn.addEventListener('click', e => { e.preventDefault(); closeModal(); });
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', e => {
+      e.preventDefault();
+      if (currentId) {
+        deleteItem(currentId);
+        closeModal();
+      }
+    });
+  }
   if (closeBtn) {
     closeBtn.addEventListener('click', e => { e.preventDefault(); closeModal(); });
   }
@@ -120,7 +130,26 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
         loadOptions(f, input, item[f.name]);
-      } 
+      }
+      else if (f.type === 'multiselect') {
+        input = document.createElement('select');
+        input.multiple = true;
+        input.className = 'w-full border border-gray-300 p-2 rounded';
+        const optionsPromise = loadOptions(f, input);
+        const selectedPromise = item.id ?
+          fetch(f.linkEndpoint, { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(list => list.filter(o => o[f.parentKey] === item.id)
+                              .map(o => o[f.childKey]))
+          : Promise.resolve([]);
+        Promise.all([optionsPromise, selectedPromise]).then(([, selected]) => {
+          input.dataset.original = JSON.stringify(selected);
+          selected.forEach(val => {
+            const opt = input.querySelector(`option[value="${val}"]`);
+            if (opt) opt.selected = true;
+          });
+        });
+      }
       else if (f.type === 'checkbox') {
         input = document.createElement('input');
         input.type = 'checkbox';
@@ -138,6 +167,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const existing = Array.isArray(item[f.name]) ? [...item[f.name]] : (item[f.name] ? [item[f.name]] : []);
         input.dataset.existing = JSON.stringify(existing);
+
+        // Keep selected files across multiple changes for multi-upload fields
+        const selectedFiles = [];
+
+        function syncFileInput() {
+          const dt = new DataTransfer();
+          selectedFiles.forEach(f => dt.items.add(f));
+          input.files = dt.files;
+        }
 
         function renderPreviews() {
           preview.innerHTML = '';
@@ -160,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             preview.append(holder);
           });
 
-          Array.from(input.files).forEach((file, idx) => {
+          selectedFiles.forEach((file, idx) => {
             const holder = document.createElement('div');
             holder.className = 'relative inline-block';
             const img = document.createElement('img');
@@ -171,9 +209,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             rm.innerHTML = '&times;';
             rm.className = 'absolute -top-1 -right-1 bg-white rounded-full text-red-600 text-xs';
             rm.addEventListener('click', () => {
-              const dt = new DataTransfer();
-              Array.from(input.files).forEach((f, i) => { if (i !== idx) dt.items.add(f); });
-              input.files = dt.files;
+              selectedFiles.splice(idx, 1);
+              syncFileInput();
               renderPreviews();
             });
             holder.append(img, rm);
@@ -181,7 +218,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
 
-        input.addEventListener('change', renderPreviews);
+        input.addEventListener('change', () => {
+          if (!f.multiple) {
+            existing.length = 0;
+            input.dataset.existing = JSON.stringify(existing);
+            selectedFiles.length = 0;
+          }
+          Array.from(input.files).forEach(f => selectedFiles.push(f));
+          syncFileInput();
+          renderPreviews();
+        });
+
+        // Initial sync for edit mode
+        syncFileInput();
         renderPreviews();
         wrapper.append(input, preview);
       } 
@@ -277,16 +326,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentId = item?.id || null;
     formTitle.textContent = item ? 'Modifier' : 'Créer';
     renderForm(item);
+    if (deleteBtn) {
+      if (item) deleteBtn.classList.remove('hidden');
+      else deleteBtn.classList.add('hidden');
+    }
 
-    // pour zones : préchargement du pays depuis la région
-    if (resource === 'zones' && item?.region_id) {
+    // Affichage des noms de pays et région lors de l'édition d'une zone
+    if (resource === 'zones') {
       const countrySelect = form.querySelector('[name="country_id"]');
-      fetch(`/api/regions/${item.region_id}`, { credentials: 'same-origin' })
-        .then(r => r.json())
-        .then(region => {
-          countrySelect.value = region.country_id;
-          countrySelect.dispatchEvent(new Event('change'));
-        });
+      const regionSelect = form.querySelector('[name="region_id"]');
+      const infoId = 'zone-edit-info';
+      let info = document.getElementById(infoId);
+      if (!info) {
+        info = document.createElement('div');
+        info.id = infoId;
+        info.className = 'mb-2 text-sm text-gray-600';
+        form.prepend(info);
+      }
+
+      async function updateInfo(regionId) {
+        if (!regionId) { info.textContent = ''; return; }
+        const reg = await fetch(`/api/regions/${regionId}`, { credentials: 'same-origin' }).then(r => r.json());
+        const country = await fetch(`/api/countries/${reg.country_id}`, { credentials: 'same-origin' }).then(r => r.json());
+        info.innerHTML = `Pays : ${country.name} — Région : ${reg.name}`;
+      }
+
+      if (item?.region_id) {
+        fetch(`/api/regions/${item.region_id}`, { credentials: 'same-origin' })
+          .then(r => r.json())
+          .then(region => {
+            countrySelect.value = region.country_id;
+            countrySelect.dispatchEvent(new Event('change'));
+            updateInfo(item.region_id);
+          });
+      }
+
+      regionSelect.addEventListener('change', () => updateInfo(regionSelect.value));
     }
 
     modal.classList.remove('hidden');
@@ -295,6 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function saveItem() {
     const data = {};
     const filesToUpload = [];
+    const linkUpdates = [];
 
     cfg.fields.forEach(f => {
       const el = form.querySelector(`[name="${f.name}"]`);
@@ -305,6 +381,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const existing = JSON.parse(el.dataset.existing || '[]');
         data[f.name] = f.multiple ? existing : existing[0] || null;
         if (el.files.length) filesToUpload.push({ field: f, input: el });
+      }
+      else if (f.type === 'multiselect') {
+        const selected = Array.from(el.selectedOptions).map(o => parseInt(o.value));
+        const original = JSON.parse(el.dataset.original || '[]');
+        linkUpdates.push({ field: f, selected, original });
       }
       else data[f.name] = el.value;
     });
@@ -331,6 +412,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       Array.from(input.files).forEach(f => fd.append('file', f));
       const uploadUrl = field.uploadEndpoint.replace('$id', itemId);
       await fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'same-origin' });
+    }
+
+    for (const { field, selected, original } of linkUpdates) {
+      const toAdd = selected.filter(id => !original.includes(id));
+      const toRemove = original.filter(id => !selected.includes(id));
+      for (const id of toAdd) {
+        const body = { [field.parentKey]: itemId, [field.childKey]: id };
+        await fetch(field.linkEndpoint + '/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          credentials: 'same-origin'
+        });
+      }
+      for (const id of toRemove) {
+        const urlDel = `${field.linkEndpoint}/${itemId}/${id}`;
+        await fetch(urlDel, { method: 'DELETE', credentials: 'same-origin' });
+      }
     }
 
     closeModal();

@@ -69,7 +69,16 @@ const CRUD_CONFIG = {
       { name: 'available_parcels', label: 'Parcelles dispo', type: 'number' },
       { name: 'color', label: 'Couleur', type: 'text' },
       { name: 'lambert_x', label: 'Lambert X', type: 'number' },
-      { name: 'lambert_y', label: 'Lambert Y', type: 'number' }
+      { name: 'lambert_y', label: 'Lambert Y', type: 'number' },
+      {
+        name: 'activities',
+        label: 'Activités',
+        type: 'multiselect',
+        optionsEndpoint: '/api/activities',
+        linkEndpoint: '/api/zone_activities',
+        parentKey: 'zone_id',
+        childKey: 'activity_id'
+      }
     ]
   },
 
@@ -100,7 +109,16 @@ const CRUD_CONFIG = {
         uploadEndpoint: '/api/parcels/$id/photo'
       },
       { name: 'lambert_x', label: 'Lambert X', type: 'number' },
-      { name: 'lambert_y', label: 'Lambert Y', type: 'number' }
+      { name: 'lambert_y', label: 'Lambert Y', type: 'number' },
+      {
+        name: 'amenities',
+        label: 'Équipements',
+        type: 'multiselect',
+        optionsEndpoint: '/api/amenities',
+        linkEndpoint: '/api/parcel_amenities',
+        parentKey: 'parcel_id',
+        childKey: 'amenity_id'
+      }
     ]
   },
 

@@ -1,9 +1,7 @@
 from marshmallow import fields, pre_load
-from marshmallow import fields, pre_load
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from geoalchemy2.shape import to_shape
 from ..models import Parcel
-from ..utils import point_from_lambert, lambert_from_point
 from ..utils import point_from_lambert, lambert_from_point
 
 class ParcelSchema(SQLAlchemyAutoSchema):
