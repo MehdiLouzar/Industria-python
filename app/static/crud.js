@@ -27,11 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deleteBtn = document.getElementById('delete-btn');
   const closeBtn  = document.getElementById('close-btn');
   const saveBtn   = document.getElementById('save-btn');
+  const searchBox = document.getElementById('search-box');
 
   let allItems    = [];
   let currentId   = null;
   const ITEMS_PER_PAGE = 10;
   let currentPage = 1;
+  let searchQuery = '';
   const selectMaps = {};
 
   // map des labels de champs
@@ -132,21 +134,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadOptions(f, input, item[f.name]);
       }
       else if (f.type === 'multiselect') {
-        input = document.createElement('select');
-        input.multiple = true;
-        input.className = 'w-full border border-gray-300 p-2 rounded';
-        const optionsPromise = loadOptions(f, input);
+        input = document.createElement('div');
+        input.className = 'flex flex-col gap-1';
+        input.dataset.field = f.name;
+
+        const optionsPromise = fetch(f.optionsEndpoint, { credentials: 'same-origin' }).then(r => r.json());
         const selectedPromise = item.id ?
           fetch(f.linkEndpoint, { credentials: 'same-origin' })
             .then(r => r.json())
             .then(list => list.filter(o => o[f.parentKey] === item.id)
                               .map(o => o[f.childKey]))
           : Promise.resolve([]);
-        Promise.all([optionsPromise, selectedPromise]).then(([, selected]) => {
+        Promise.all([optionsPromise, selectedPromise]).then(([options, selected]) => {
           input.dataset.original = JSON.stringify(selected);
-          selected.forEach(val => {
-            const opt = input.querySelector(`option[value="${val}"]`);
-            if (opt) opt.selected = true;
+          options.forEach(opt => {
+            const lbl = document.createElement('label');
+            lbl.className = 'inline-flex items-center gap-1';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.name = f.name;
+            cb.value = opt.id;
+            if (selected.includes(opt.id)) cb.checked = true;
+            lbl.append(cb, document.createTextNode(getLabel(opt)));
+            input.appendChild(lbl);
           });
         });
       }
@@ -243,7 +253,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      input.name = f.name;
+      if (f.type !== 'multiselect') {
+        input.name = f.name;
+      }
       if (f.type !== 'file') wrapper.appendChild(input);
       form.appendChild(wrapper);
     });
@@ -277,8 +289,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Corps
     const tbody = document.createElement('tbody');
+    const filtered = allItems.filter(i =>
+      JSON.stringify(i).toLowerCase().includes(searchQuery)
+    );
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    allItems.slice(start, start + ITEMS_PER_PAGE).forEach(item => {
+    filtered.slice(start, start + ITEMS_PER_PAGE).forEach(item => {
       const tr = document.createElement('tr');
       cfg.display.forEach(col => {
         const td = document.createElement('td');
@@ -309,7 +324,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.append(table);
 
     // Pagination
-    const totalPages = Math.ceil(allItems.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
     const pag = document.createElement('div');
     pag.className = 'mt-4 flex space-x-2';
     for (let i = 1; i <= totalPages; i++) {
@@ -322,7 +337,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.append(pag);
   }
 
-  function openForm(item = null) {
+  async function openForm(item = null) {
     currentId = item?.id || null;
     formTitle.textContent = item ? 'Modifier' : 'Créer';
     renderForm(item);
@@ -352,13 +367,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       if (item?.region_id) {
-        fetch(`/api/regions/${item.region_id}`, { credentials: 'same-origin' })
-          .then(r => r.json())
-          .then(region => {
-            countrySelect.value = region.country_id;
-            countrySelect.dispatchEvent(new Event('change'));
-            updateInfo(item.region_id);
-          });
+        const region = await fetch(`/api/regions/${item.region_id}`, { credentials: 'same-origin' }).then(r => r.json());
+        await loadOptions(cfg.fields.find(f => f.name === 'country_id'), countrySelect, region.country_id);
+        countrySelect.dispatchEvent(new Event('change'));
+        updateInfo(item.region_id);
       }
 
       regionSelect.addEventListener('change', () => updateInfo(regionSelect.value));
@@ -373,8 +385,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const linkUpdates = [];
 
     cfg.fields.forEach(f => {
-      const el = form.querySelector(`[name="${f.name}"]`);
-      if (!el || f.transient) return;
+      if (f.transient) return;
+      const el = f.type === 'multiselect'
+        ? form.querySelector(`[data-field="${f.name}"]`)
+        : form.querySelector(`[name="${f.name}"]`);
+      if (!el) return;
 
       if (f.type === 'checkbox') data[f.name] = el.checked;
       else if (f.type === 'file') {
@@ -383,7 +398,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (el.files.length) filesToUpload.push({ field: f, input: el });
       }
       else if (f.type === 'multiselect') {
-        const selected = Array.from(el.selectedOptions).map(o => parseInt(o.value));
+        const selected = Array.from(el.querySelectorAll('input[type="checkbox"]:checked')).map(c => parseInt(c.value));
         const original = JSON.parse(el.dataset.original || '[]');
         linkUpdates.push({ field: f, selected, original });
       }
@@ -447,4 +462,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadSelectMaps();
   fetchItems();
+
+  if (searchBox) {
+    searchBox.addEventListener('input', () => {
+      searchQuery = searchBox.value.trim().toLowerCase();
+      currentPage = 1;
+      renderTable();
+    });
+  }
 });
