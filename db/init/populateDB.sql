@@ -1,3 +1,18 @@
+-- 1) Vider toutes les tables et réinitialiser les identifiants
+TRUNCATE
+  appointments,
+  parcels,
+  zones,
+  spatial_entities,
+  appointment_statuses,
+  activities,
+  amenities,
+  roles,
+  regions,
+  zone_types,
+  countries
+RESTART IDENTITY CASCADE;
+
 -- Pays
 INSERT INTO countries (id, name, code)
 VALUES (1, 'Maroc', 'MA')
