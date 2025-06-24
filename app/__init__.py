@@ -2,6 +2,7 @@ import os
 import logging
 from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from .swagger import api
 
 db = SQLAlchemy()
@@ -40,6 +41,7 @@ def create_app():
         "roles",
         "users",
         "amenities",
+        "zone_types",
         "zones",
         "activities",
         "parcels",
@@ -69,6 +71,35 @@ def create_app():
 
     with app.app_context():
         from . import models  # noqa: F401  ensure models are registered
+
+        # Auto-upgrade legacy databases that predate zone_types
+        insp = db.inspect(db.engine)
+        zone_cols = [c['name'] for c in insp.get_columns('zones')] if 'zones' in insp.get_table_names() else []
+
+        if 'zone_type' in zone_cols and 'zone_type_id' not in zone_cols:
+            db.session.execute(text('ALTER TABLE zones RENAME COLUMN zone_type TO zone_type_id'))
+        if 'zone_type_id' not in zone_cols and 'zones' in insp.get_table_names():
+            db.session.execute(text('ALTER TABLE zones ADD COLUMN zone_type_id INTEGER'))
+        if 'zone_description' in zone_cols:
+            db.session.execute(text('ALTER TABLE zones DROP COLUMN zone_description'))
+        if 'county_code' in zone_cols:
+            db.session.execute(text('ALTER TABLE zones DROP COLUMN county_code'))
+
+        if 'zone_types' not in insp.get_table_names():
+            db.session.execute(text(
+                'CREATE TABLE IF NOT EXISTS zone_types ('
+                'id SERIAL PRIMARY KEY, name VARCHAR NOT NULL UNIQUE)'
+            ))
+        db.session.execute(text(
+            "INSERT INTO zone_types (id, name) VALUES (1, 'privée'), (2, 'public') "
+            'ON CONFLICT DO NOTHING'
+        ))
+        db.session.execute(text(
+            'ALTER TABLE zones '
+            'ADD CONSTRAINT IF NOT EXISTS zones_zone_type_id_fkey '
+            'FOREIGN KEY (zone_type_id) REFERENCES zone_types(id)'
+        ))
+        db.session.commit()
 
         db.create_all()
 

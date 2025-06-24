@@ -11,8 +11,9 @@
 <div id="table-container" class="overflow-x-auto"></div>
 
 <!-- Modal -->
-<div id="form-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-  <div class="bg-white p-6 rounded w-full max-w-lg">
+<div id="form-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+  <div class="bg-white p-6 rounded w-full max-w-lg max-h-screen overflow-y-auto relative">
+    <button id="close-btn" class="absolute top-2 right-2 text-gray-500">&times;</button>
     <h2 id="form-title" class="text-xl font-bold mb-4"></h2>
     <form id="item-form" class="space-y-4"></form>
     <div class="flex justify-end space-x-2 mt-4">
