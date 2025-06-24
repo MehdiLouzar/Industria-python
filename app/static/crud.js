@@ -8,7 +8,13 @@ function getLabel(obj) {
     || obj.id;
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+function normalizeText(text) {
+  return text
+    ? text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    : '';
+}
+
+async function initCrud() {
   const container = document.getElementById('crud-app');
   if (!container) return;
 
@@ -289,9 +295,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Corps
     const tbody = document.createElement('tbody');
-    const filtered = allItems.filter(i =>
-      JSON.stringify(i).toLowerCase().includes(searchQuery)
-    );
+    const filtered = allItems.filter(i => {
+      const data = normalizeText(JSON.stringify(i));
+      return data.includes(searchQuery);
+    });
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     filtered.slice(start, start + ITEMS_PER_PAGE).forEach(item => {
       const tr = document.createElement('tr');
@@ -465,9 +472,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (searchBox) {
     searchBox.addEventListener('input', () => {
-      searchQuery = searchBox.value.trim().toLowerCase();
+      searchQuery = normalizeText(searchBox.value.trim());
       currentPage = 1;
       renderTable();
     });
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCrud);
+} else {
+  initCrud();
+}
