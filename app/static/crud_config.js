@@ -37,20 +37,27 @@ const CRUD_CONFIG = {
       {name: 'icon', label: 'Icon', type: 'file', uploadEndpoint: '/api/amenities/$id/icon'}
     ]
   },
+  zone_types: {
+    display: ['id', 'name'],
+    fields: [
+      {name: 'name', label: 'Nom', type: 'text'}
+    ]
+  },
   zones: {
-    display: ['id', 'name', 'county_code', 'zone_type', 'zone_description', 'region_id'],
+    display: ['id', 'name', 'zone_type_id', 'region_id'],
     fields: [
       {name: 'name', label: 'Nom', type: 'text'},
-      {name: 'county_code', label: 'Code département', type: 'text'},
-      {name: 'zone_type', label: 'Type', type: 'number'},
-      {name: 'zone_description', label: 'Description', type: 'text'},
+      {name: 'zone_type_id', label: 'Type', type: 'select', optionsEndpoint: '/api/zone_types'},
       {name: 'is_available', label: 'Disponible', type: 'checkbox'},
-      {name: 'region_id', label: 'Région', type: 'select', optionsEndpoint: '/api/regions'},
+      {name: 'country_id', label: 'Pays', type: 'select', optionsEndpoint: '/api/countries', transient: true},
+      {name: 'region_id', label: 'Région', type: 'select', optionsEndpoint: '/api/countries/$country_id/regions', dependsOn: 'country_id', mapEndpoint: '/api/regions'},
       {name: 'total_area', label: 'Superficie totale', type: 'number'},
       {name: 'total_parcels', label: 'Parcelles totales', type: 'number'},
       {name: 'available_parcels', label: 'Parcelles dispo', type: 'number'},
-      {name: 'color', label: 'Couleur', type: 'text'}
-    ]
+      {name: 'color', label: 'Couleur', type: 'text'},
+      {name: 'lambert_x', label: 'Lambert X', type: 'number'},
+      {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
+      ]
   },
   activities: {
     display: ['id', 'label'],
@@ -70,8 +77,10 @@ const CRUD_CONFIG = {
       {name: 'is_showroom', label: 'Showroom', type: 'checkbox'},
       {name: 'CoS', label: 'CoS', type: 'number'},
       {name: 'CuS', label: 'CuS', type: 'number'},
-      {name: 'photos', label: 'Photos', type: 'file', multiple: true, uploadEndpoint: '/api/parcels/$id/photo'}
-    ]
+      {name: 'photos', label: 'Photos', type: 'file', multiple: true, uploadEndpoint: '/api/parcels/$id/photo'},
+      {name: 'lambert_x', label: 'Lambert X', type: 'number'},
+      {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
+      ]
   },
   activity_logs: {
     display: ['id', 'user_id', 'action', 'target', 'timestamp'],
