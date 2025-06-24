@@ -44,11 +44,10 @@ const CRUD_CONFIG = {
     ]
   },
   zones: {
-    display: ['id', 'name', 'zone_type_id', 'zone_description', 'region_id'],
+    display: ['id', 'name', 'zone_type_id', 'region_id'],
     fields: [
       {name: 'name', label: 'Nom', type: 'text'},
       {name: 'zone_type_id', label: 'Type', type: 'select', optionsEndpoint: '/api/zone_types'},
-      {name: 'zone_description', label: 'Description', type: 'text'},
       {name: 'is_available', label: 'Disponible', type: 'checkbox'},
       {name: 'country_id', label: 'Pays', type: 'select', optionsEndpoint: '/api/countries', transient: true},
       {name: 'region_id', label: 'Région', type: 'select', optionsEndpoint: '/api/countries/$country_id/regions', dependsOn: 'country_id', mapEndpoint: '/api/regions'},
