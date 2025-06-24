@@ -59,12 +59,7 @@
                     <span class="text-xl font-semibold text-gray-800">Industria</span>
                 </a>
             </header>
-            <main class="flex-grow container mx-auto px-6 mt-8">
-                {% block content %}{% endblock %}
-            </main>
-        </div>
-    </div>
-    {% else %}
+{% else %}
     <div class="min-h-screen flex flex-col">
         <header class="bg-white shadow-md h-16 flex items-center">
             <div class="container mx-auto px-6 flex justify-between items-center">
@@ -78,9 +73,12 @@
                 </div>
             </div>
         </header>
+{% endif %}
         <main class="flex-grow container mx-auto px-6 mt-8">
             {% block content %}{% endblock %}
         </main>
+    </div>
+    {% if user %}
     </div>
     {% endif %}
 
