@@ -298,15 +298,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     formTitle.textContent = item ? 'Modifier' : 'Créer';
     renderForm(item);
 
-    // pour zones : préchargement du pays depuis la région
-    if (resource === 'zones' && item?.region_id) {
+    // Affichage des noms de pays et région lors de l'édition d'une zone
+    if (resource === 'zones') {
       const countrySelect = form.querySelector('[name="country_id"]');
-      fetch(`/api/regions/${item.region_id}`, { credentials: 'same-origin' })
-        .then(r => r.json())
-        .then(region => {
-          countrySelect.value = region.country_id;
-          countrySelect.dispatchEvent(new Event('change'));
-        });
+      const regionSelect = form.querySelector('[name="region_id"]');
+      const infoId = 'zone-edit-info';
+      let info = document.getElementById(infoId);
+      if (!info) {
+        info = document.createElement('div');
+        info.id = infoId;
+        info.className = 'mb-2 text-sm text-gray-600';
+        form.prepend(info);
+      }
+
+      async function updateInfo(regionId) {
+        if (!regionId) { info.textContent = ''; return; }
+        const reg = await fetch(`/api/regions/${regionId}`, { credentials: 'same-origin' }).then(r => r.json());
+        const country = await fetch(`/api/countries/${reg.country_id}`, { credentials: 'same-origin' }).then(r => r.json());
+        info.innerHTML = `Pays : ${country.name} — Région : ${reg.name}`;
+      }
+
+      if (item?.region_id) {
+        fetch(`/api/regions/${item.region_id}`, { credentials: 'same-origin' })
+          .then(r => r.json())
+          .then(region => {
+            countrySelect.value = region.country_id;
+            countrySelect.dispatchEvent(new Event('change'));
+            updateInfo(item.region_id);
+          });
+      }
+
+      regionSelect.addEventListener('change', () => updateInfo(regionSelect.value));
     }
 
     modal.classList.remove('hidden');
