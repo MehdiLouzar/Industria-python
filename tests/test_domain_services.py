@@ -1,6 +1,6 @@
 import pytest
 from app import db
-from app.models import Country, Region, Zone, Parcel, User, AppointmentStatus, Appointment
+from app.models import Country, Region, Zone, Parcel, AppointmentStatus, Appointment
 from app.services.domain_services import (
     CountryService, RegionService, ZoneService,
     ParcelService, AppointmentService
@@ -38,12 +38,3 @@ def test_parcel_create_missing_zone(app):
     with pytest.raises(Exception):
         svc.create(parcel)
 
-
-def test_appointment_create_missing_user(app):
-    status = AppointmentStatus(status_name='new')
-    db.session.add(status)
-    db.session.commit()
-    svc = AppointmentService(Appointment)
-    appt = Appointment(user_id=999, parcel_id=None, appointment_status_id=status.id)
-    with pytest.raises(Exception):
-        svc.create(appt)

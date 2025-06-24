@@ -101,7 +101,6 @@ class AppointmentStatus {
 
 class Appointment {
   +id: Integer
-  +user_id: Integer
   +parcel_id: Integer
   +appointment_status_id: Integer
   +requested_date: Date
