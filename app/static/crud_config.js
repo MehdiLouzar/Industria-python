@@ -50,7 +50,7 @@ const CRUD_CONFIG = {
       {name: 'zone_type_id', label: 'Type', type: 'select', optionsEndpoint: '/api/zone_types'},
       {name: 'is_available', label: 'Disponible', type: 'checkbox'},
       {name: 'country_id', label: 'Pays', type: 'select', optionsEndpoint: '/api/countries', transient: true},
-      {name: 'region_id', label: 'Région', type: 'select', optionsEndpoint: '/api/countries/$country_id/regions', dependsOn: 'country_id', mapEndpoint: '/api/regions'},
+      {name: 'region_id', label: 'Région', type: 'select', optionsEndpoint: '/api/countries/$country_id/regions', dependsOn: 'country_id'},
       {name: 'total_area', label: 'Superficie totale', type: 'number'},
       {name: 'total_parcels', label: 'Parcelles totales', type: 'number'},
       {name: 'available_parcels', label: 'Parcelles dispo', type: 'number'},

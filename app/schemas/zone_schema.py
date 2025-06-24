@@ -40,9 +40,7 @@ class ZoneSchema(SQLAlchemyAutoSchema):
         x = data.pop("lambert_x", None)
         y = data.pop("lambert_y", None)
         if x is not None and y is not None:
-            geom = point_from_lambert(x, y)
-            data["geometry"] = geom
-            data["centroid"] = geom
+            data["geometry"] = point_from_lambert(x, y)
         return data
 
     def pass_through(self, value):
