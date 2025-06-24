@@ -127,7 +127,6 @@ Base table used for spatial objects. Other spatial models inherit from this tabl
 | Column               | Type      | Notes                                        |
 | -------------------- | --------- | -------------------------------------------- |
 | id                   | Integer   | Primary key                                  |
-| user_id              | Integer   | Foreign key to `users.id`                    |
 | parcel_id            | Integer   | Foreign key to `parcels.id`                  |
 | appointment_status_id| Integer   | Foreign key to `appointment_statuses.id`     |
 | requested_date       | Date      |                                              |

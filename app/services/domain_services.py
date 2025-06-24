@@ -73,8 +73,6 @@ class ParcelService(CRUDService):
 
 class AppointmentService(CRUDService):
     def create(self, obj):
-        if obj.user_id and not User.query.get(obj.user_id):
-            abort(400, "User not found")
         if obj.parcel_id and not Parcel.query.get(obj.parcel_id):
             abort(400, "Parcel not found")
         if obj.appointment_status_id and not AppointmentStatus.query.get(obj.appointment_status_id):
@@ -82,8 +80,6 @@ class AppointmentService(CRUDService):
         return super().create(obj)
 
     def update(self, obj):
-        if obj.user_id and not User.query.get(obj.user_id):
-            abort(400, "User not found")
         if obj.parcel_id and not Parcel.query.get(obj.parcel_id):
             abort(400, "Parcel not found")
         if obj.appointment_status_id and not AppointmentStatus.query.get(obj.appointment_status_id):

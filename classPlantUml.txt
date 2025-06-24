@@ -101,7 +101,6 @@ class AppointmentStatus {
 
 class Appointment {
   +id: Integer
-  +user_id: Integer
   +parcel_id: Integer
   +appointment_status_id: Integer
   +requested_date: Date
@@ -133,7 +132,6 @@ Zone "*" -> "1" ZoneType : has type
 Zone "1" --|> "1" SpatialEntity : inherits
 Parcel "1" -> "*" Zone : belongs to
 Parcel "1" --|> "1" SpatialEntity : inherits
-Appointment "*" --> "1" User : requested by
 Appointment "*" --> "1" Parcel : for
 Appointment "*" --> "1" AppointmentStatus : has
 ActivityLog "*" --> "1" User : triggered by
