@@ -2,6 +2,7 @@ import os
 import logging
 from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from .swagger import api
 
 db = SQLAlchemy()

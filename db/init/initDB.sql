@@ -1,40 +1,36 @@
--- Ensure zone types table and column exist before inserting data
-CREATE TABLE IF NOT EXISTS zone_types (
-  id   SERIAL PRIMARY KEY,
-  name VARCHAR NOT NULL UNIQUE
-);
+-- initDB.sql
+-- Reset the database and populate demo data for Industria
 
-ALTER TABLE zones ADD COLUMN IF NOT EXISTS zone_type_id INTEGER;
+TRUNCATE TABLE
+  zone_activities,
+  parcel_amenities,
+  appointments,
+  parcels,
+  zones,
+  zone_types,
+  activities,
+  amenities,
+  appointment_status,
+  regions,
+  countries,
+  roles,
+  users,
+  activity_logs,
+  spatial_entities
+RESTART IDENTITY CASCADE;
 
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name='zones' AND column_name='zone_type'
-  ) AND NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name='zones' AND column_name='zone_type_id'
-  ) THEN
-    ALTER TABLE zones RENAME COLUMN zone_type TO zone_type_id;
-  END IF;
-END$$;
+CREATE EXTENSION IF NOT EXISTS postgis;
 
-ALTER TABLE zones
-  ADD CONSTRAINT IF NOT EXISTS zones_zone_type_id_fkey
-  FOREIGN KEY (zone_type_id) REFERENCES zone_types(id);
-
--- Pays
-INSERT INTO countries (id, name, code)
-VALUES (1, 'Maroc', 'MA')
+-- Basic reference data
+INSERT INTO countries (id, name, code) VALUES
+  (1, 'Maroc', 'MA')
 ON CONFLICT DO NOTHING;
 
--- Types de zone
 INSERT INTO zone_types (id, name) VALUES
   (1, 'privée'),
   (2, 'public')
 ON CONFLICT DO NOTHING;
 
--- Régions
 INSERT INTO regions (id, name, country_id) VALUES
   (1, 'Tanger-Tétouan-Al Hoceïma', 1),
   (2, 'L''Oriental',              1),
@@ -50,14 +46,12 @@ INSERT INTO regions (id, name, country_id) VALUES
   (12,'Dakhla-Oued Ed-Dahab',     1)
 ON CONFLICT DO NOTHING;
 
--- Rôles
 INSERT INTO roles (id, name) VALUES
   (1, 'admin'),
   (2, 'manager'),
   (3, 'user')
 ON CONFLICT DO NOTHING;
 
--- Commodités et activités
 INSERT INTO amenities (id, amenities_key, label, icon) VALUES
   (1, 'key_1', 'Amenity 1', 'icon-1'),
   (2, 'key_2', 'Amenity 2', 'icon-2'),
@@ -74,14 +68,13 @@ INSERT INTO activities (id, activities_key, label, icon) VALUES
   (5, 'key_5', 'Activity 5', 'icon-5')
 ON CONFLICT DO NOTHING;
 
--- Statuts de rdv (notez le nom de table ending en -es)
-INSERT INTO appointment_statuses (id, status_name) VALUES
+INSERT INTO appointment_status (id, status_name) VALUES
   (1, 'Pending'),
   (2, 'Confirmed'),
   (3, 'Canceled')
 ON CONFLICT DO NOTHING;
 
--- Zone principale
+-- Main zone
 WITH ins AS (
   INSERT INTO spatial_entities (entity_type, name, description, geometry)
   VALUES (
@@ -95,9 +88,13 @@ WITH ins AS (
 )
 INSERT INTO zones (
   id, zone_type_id, is_available,
+  id, zone_type_id, is_available,
   region_id, total_area, total_parcels, available_parcels, color, centroid
 )
 SELECT
+  ins.id,
+  (SELECT id FROM zone_types WHERE name = 'privée'),
+  TRUE,
   ins.id,
   (SELECT id FROM zone_types WHERE name = 'privée'),
   TRUE,
@@ -106,18 +103,20 @@ SELECT
   ST_Centroid(ins.geometry)
 FROM ins;
 
--- Parcelles (cos et cus sont en pourcentage)
+-- Parcels
 DO $$
 DECLARE
-  -- On récupère une fois pour toutes l'id de la zone 'Zone A'
   zone_id integer := (
+    SELECT z.id
+    FROM zones z
+    JOIN spatial_entities se ON se.id = z.id
+    WHERE se.name = 'Zone A'
     SELECT z.id
     FROM zones z
     JOIN spatial_entities se ON se.id = z.id
     WHERE se.name = 'Zone A'
     LIMIT 1
   );
-  -- Tableau de WKT pour les 10 parcelles
   coords text[] := ARRAY[
     'POLYGON ((0.4287334 30.4895076,0.4287334 30.4897076,0.4285334 30.4897076,0.4285334 30.4895076,0.4287334 30.4895076))',
     'POLYGON ((0.4289786 30.4880721,0.4289786 30.4882721,0.4287786 30.4882721,0.4287786 30.4880721,0.4289786 30.4880721))',
@@ -130,9 +129,7 @@ DECLARE
     'POLYGON ((0.4342740 30.4778731,0.4342740 30.4780731,0.4340740 30.4780731,0.4340740 30.4778731,0.4342740 30.4778731))',
     'POLYGON ((0.4356864 30.4765595,0.4356864 30.4767595,0.4354864 30.4767595,0.4354864 30.4765595,0.4356864 30.4765595))'
   ];
-  -- Valeurs de CoS (en %)
   pct_vals numeric[] := ARRAY[0.47, 0.57, 0.46, 0.55, 0.75, 0.58, 0.53, 0.66, 0.75, 0.76];
-  -- Valeurs de CuS (en %)
   cus_vals numeric[] := ARRAY[1.02, 0.96, 1.42, 1.48, 1.03, 0.94, 1.10, 1.44, 1.23, 1.09];
   i integer;
 BEGIN
@@ -173,7 +170,6 @@ BEGIN
 END
 $$;
 
--- RDV
 INSERT INTO appointments (
   id, parcel_id, appointment_status_id, requested_date,
   confirmed_date, appointment_message, contact_phone, company_name, job_title
@@ -181,31 +177,31 @@ INSERT INTO appointments (
 VALUES
   (1,
    (SELECT id FROM parcels ORDER BY id LIMIT 1),
-   (SELECT id FROM appointment_statuses WHERE status_name = 'Confirmed'),
+   (SELECT id FROM appointment_status WHERE status_name = 'Confirmed'),
    CURRENT_DATE, CURRENT_TIMESTAMP,
    'Demande de RDV', '+21261234560', 'Company0', 'Directeur'
   ),
   (2,
    (SELECT id FROM parcels ORDER BY id OFFSET 1 LIMIT 1),
-   (SELECT id FROM appointment_statuses WHERE status_name = 'Pending'),
+   (SELECT id FROM appointment_status WHERE status_name = 'Pending'),
    CURRENT_DATE, CURRENT_TIMESTAMP,
    'Demande de RDV', '+21261234561', 'Company1', 'Directeur'
   ),
   (3,
    (SELECT id FROM parcels ORDER BY id OFFSET 2 LIMIT 1),
-   (SELECT id FROM appointment_statuses WHERE status_name = 'Confirmed'),
+   (SELECT id FROM appointment_status WHERE status_name = 'Confirmed'),
    CURRENT_DATE, CURRENT_TIMESTAMP,
    'Demande de RDV', '+21261234562', 'Company2', 'Directeur'
   ),
   (4,
    (SELECT id FROM parcels ORDER BY id OFFSET 3 LIMIT 1),
-   (SELECT id FROM appointment_statuses WHERE status_name = 'Pending'),
+   (SELECT id FROM appointment_status WHERE status_name = 'Pending'),
    CURRENT_DATE, CURRENT_TIMESTAMP,
    'Demande de RDV', '+21261234563', 'Company3', 'Directeur'
   ),
   (5,
    (SELECT id FROM parcels ORDER BY id OFFSET 4 LIMIT 1),
-   (SELECT id FROM appointment_statuses WHERE status_name = 'Confirmed'),
+   (SELECT id FROM appointment_status WHERE status_name = 'Confirmed'),
    CURRENT_DATE, CURRENT_TIMESTAMP,
    'Demande de RDV', '+21261234564', 'Company4', 'Directeur'
   )
