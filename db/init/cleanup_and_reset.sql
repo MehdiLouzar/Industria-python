@@ -1,20 +1,20 @@
 -- cleanup_and_reset_fixed.sql
 
--- 1. Supprimer les zones en doublon (même county_code), ne garder que la plus petite id
+-- 1. Supprimer les zones en doublon (même nom), ne garder que la plus petite id
 DELETE FROM zones
- WHERE county_code = 'MA-RB'
+ WHERE name = 'Zone A'
    AND id NOT IN (
      SELECT MIN(id)
        FROM zones
-      WHERE county_code = 'MA-RB'
-      GROUP BY county_code
+      WHERE name = 'Zone A'
+      GROUP BY name
    );
 
 -- 2. Récupérer l'id unique de la zone restante
 WITH z AS (
   SELECT MIN(id) AS keep_id
     FROM zones
-   WHERE county_code = 'MA-RB'
+   WHERE name = 'Zone A'
 )
 -- 3. Réaffecter toutes les parcelles vers cette zone
 UPDATE parcels p

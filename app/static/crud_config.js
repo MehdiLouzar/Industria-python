@@ -37,13 +37,17 @@ const CRUD_CONFIG = {
       {name: 'icon', label: 'Icon', type: 'file', uploadEndpoint: '/api/amenities/$id/icon'}
     ]
   },
+  zone_types: {
+    display: ['id', 'name'],
+    fields: [
+      {name: 'name', label: 'Nom', type: 'text'}
+    ]
+  },
   zones: {
-    display: ['id', 'name', 'county_code', 'zone_type', 'zone_description', 'region_id'],
+    display: ['id', 'name', 'zone_type_id', 'region_id'],
     fields: [
       {name: 'name', label: 'Nom', type: 'text'},
-      {name: 'county_code', label: 'Code département', type: 'text'},
-      {name: 'zone_type', label: 'Type', type: 'number'},
-      {name: 'zone_description', label: 'Description', type: 'text'},
+      {name: 'zone_type_id', label: 'Type', type: 'select', optionsEndpoint: '/api/zone_types'},
       {name: 'is_available', label: 'Disponible', type: 'checkbox'},
       {name: 'country_id', label: 'Pays', type: 'select', optionsEndpoint: '/api/countries', transient: true},
       {name: 'region_id', label: 'Région', type: 'select', optionsEndpoint: '/api/countries/$country_id/regions', dependsOn: 'country_id'},

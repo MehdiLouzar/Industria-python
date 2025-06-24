@@ -6,6 +6,7 @@ from .role import Role
 from .user import User
 from .amenity import Amenity
 from .zone import Zone
+from .zone_type import ZoneType
 from .activity import Activity
 from .parcel import Parcel
 from .activity_log import ActivityLog
@@ -16,6 +17,6 @@ from .parcel_amenity import ParcelAmenity
 
 __all__ = [
     'SpatialEntity', 'Country', 'Region', 'Role', 'User',
-    'Amenity', 'Zone', 'Activity', 'Parcel', 'ActivityLog',
+    'Amenity', 'Zone', 'ZoneType', 'Activity', 'Parcel', 'ActivityLog',
     'AppointmentStatus', 'Appointment', 'ZoneActivity', 'ParcelAmenity'
 ]
