@@ -1,3 +1,28 @@
+-- Ensure zone types table and column exist before inserting data
+CREATE TABLE IF NOT EXISTS zone_types (
+  id   SERIAL PRIMARY KEY,
+  name VARCHAR NOT NULL UNIQUE
+);
+
+ALTER TABLE zones ADD COLUMN IF NOT EXISTS zone_type_id INTEGER;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='zones' AND column_name='zone_type'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='zones' AND column_name='zone_type_id'
+  ) THEN
+    ALTER TABLE zones RENAME COLUMN zone_type TO zone_type_id;
+  END IF;
+END$$;
+
+ALTER TABLE zones
+  ADD CONSTRAINT IF NOT EXISTS zones_zone_type_id_fkey
+  FOREIGN KEY (zone_type_id) REFERENCES zone_types(id);
+
 -- 1) Vider toutes les tables et réinitialiser les identifiants
 TRUNCATE
   appointments,
@@ -61,9 +86,10 @@ INSERT INTO activities (id, activities_key, label, icon) VALUES
   (2, 'key_2', 'Activity 2', 'icon-2'),
   (3, 'key_3', 'Activity 3', 'icon-3'),
   (4, 'key_4', 'Activity 4', 'icon-4'),
-  (5, 'key_5', 'Activity 5', 'icon-5')
-ON CONFLICT DO NOTHING;
-
+    SELECT z.id
+    FROM zones z
+    JOIN spatial_entities se ON se.id = z.id
+    WHERE se.name = 'Zone A'
 -- Statuts de rdv (notez le nom de table ending en -es)
 INSERT INTO appointment_statuses (id, status_name) VALUES
   (1, 'Pending'),
