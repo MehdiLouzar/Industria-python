@@ -13,7 +13,7 @@ This repository provides a minimal example of how to containerize a Flask applic
     decorators.py       # authentication decorators
 run.py                  # Entry point for the app
 Dockerfile              # Container image for the Flask app
-./db/init/script.sql    # Optional SQL script executed on DB start
+./db/init/initDB.sql    # Script to reset and seed the database
 ./docker-compose.yml    # Compose configuration
 ```
 
@@ -28,9 +28,9 @@ The Flask application will be available at `http://localhost:8000/`, the Postgre
 The application relies entirely on PostgreSQL for persistence.
 
 Database tables are created automatically on first start using SQLAlchemy.
-If you started the application before the `zone_types` table was added,
-execute `db/init/upgrade_zone_types.sql` against your database to create the
-new table and column.
+To reset a development database with demo data, run `psql -f db/init/initDB.sql`
+once the tables exist. The script truncates all tables and inserts a sample
+dataset.
 
 ### API documentation
 
