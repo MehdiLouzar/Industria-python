@@ -1,7 +1,9 @@
 from marshmallow import fields, pre_load
+from marshmallow import fields, pre_load
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from geoalchemy2.shape import to_shape
 from ..models import Parcel
+from ..utils import point_from_lambert, lambert_from_point
 from ..utils import point_from_lambert, lambert_from_point
 
 class ParcelSchema(SQLAlchemyAutoSchema):
@@ -9,10 +11,9 @@ class ParcelSchema(SQLAlchemyAutoSchema):
     entity_type = fields.Str(dump_only=True)
     # Override des Numeric → Float
     area = fields.Float()
-    CoS = fields.Float(attribute="CoS")  # ou 'CoS' si c'est bien le nom de l'attribut
-    CuS = fields.Float(attribute="CuS")  # pareil pour 'CuS'
+    CoS = fields.Float(attribute="CoS")  
+    CuS = fields.Float(attribute="CuS") 
 
-    # Géométrie en GeoJSON
     geometry = fields.Method("get_geometry", deserialize="pass_through")
     lambert_x = fields.Method("get_lambert_x", dump_only=True, allow_none=True)
     lambert_y = fields.Method("get_lambert_y", dump_only=True, allow_none=True)

@@ -17,12 +17,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const formTitle = document.getElementById('form-title');
   const cancelBtn = document.getElementById('cancel-btn');
   const closeBtn = document.getElementById('close-btn');
+  const closeBtn = document.getElementById('close-btn');
   const saveBtn = document.getElementById('save-btn');
   let allItems = [];
   let currentId = null;
   const ITEMS_PER_PAGE = 10;
   let currentPage = 1;
   const selectMaps = {};
+  const labelMap = {};
+  cfg.fields.forEach(f => { labelMap[f.name] = f.label || f.name; });
   const labelMap = {};
   cfg.fields.forEach(f => { labelMap[f.name] = f.label || f.name; });
 
@@ -57,9 +60,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       closeModal();
     });
   }
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeModal();
+    });
+  }
 
   async function loadOptions(field, selectEl, selectedValue) {
+  async function loadOptions(field, selectEl, selectedValue) {
     if (!field.optionsEndpoint) return;
+    let url = field.optionsEndpoint;
+    if (field.dependsOn) {
+      const depVal = form.querySelector(`[name="${field.dependsOn}"]`).value;
+      if (!depVal) {
+        selectEl.innerHTML = '';
+        return;
+      }
+      url = url.replace(`$${field.dependsOn}`, depVal);
+    }
+    const resp = await fetch(url, {credentials: 'same-origin'});
     let url = field.optionsEndpoint;
     if (field.dependsOn) {
       const depVal = form.querySelector(`[name="${field.dependsOn}"]`).value;
@@ -76,12 +96,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     empty.value = '';
     empty.textContent = '';
     selectEl.appendChild(empty);
+    selectEl.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = '';
+    selectEl.appendChild(empty);
     data.forEach(opt => {
       const option = document.createElement('option');
       option.value = opt.id;
       option.textContent = getLabel(opt);
       selectEl.appendChild(option);
     });
+    if (selectedValue !== undefined && selectedValue !== null) {
+      selectEl.value = selectedValue;
+    }
     if (selectedValue !== undefined && selectedValue !== null) {
       selectEl.value = selectedValue;
     }
@@ -99,6 +127,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (f.type === 'select') {
         input = document.createElement('select');
         input.className = 'w-full border border-gray-300 p-2 rounded';
+        if (f.dependsOn) {
+          input.disabled = true;
+          const depEl = form.querySelector(`[name="${f.dependsOn}"]`);
+          const update = async () => {
+            await loadOptions(f, input, item ? item[f.name] : null);
+            input.disabled = false;
+          };
+          depEl.addEventListener('change', update);
+          if (depEl && depEl.value) update();
+        } else {
+          loadOptions(f, input, item ? item[f.name] : null);
+        }
         if (f.dependsOn) {
           input.disabled = true;
           const depEl = form.querySelector(`[name="${f.dependsOn}"]`);
@@ -202,6 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function fetchItems() {
     const resp = await fetch('/api/' + resource + '/', {credentials: 'same-origin'});
+    const resp = await fetch('/api/' + resource + '/', {credentials: 'same-origin'});
     allItems = await resp.json();
     renderTable();
   }
@@ -215,6 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const headRow = document.createElement('tr');
     cfg.display.forEach(col => {
       const th = document.createElement('th');
+      th.textContent = labelMap[col] || col.replace(/_/g, ' ');
       th.textContent = labelMap[col] || col.replace(/_/g, ' ');
       th.className = 'px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase';
       headRow.appendChild(th);
@@ -285,6 +327,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           countrySelect.dispatchEvent(new Event('change'));
         });
     }
+    if (resource === 'zones' && item && item.region_id) {
+      const countrySelect = form.querySelector('[name="country_id"]');
+      const regionSelect = form.querySelector('[name="region_id"]');
+      fetch('/api/regions/' + item.region_id, {credentials: 'same-origin'})
+        .then(r => r.json())
+        .then(region => {
+          countrySelect.value = region.country_id;
+          countrySelect.dispatchEvent(new Event('change'));
+        });
+    }
   }
 
   async function saveItem() {
@@ -294,9 +346,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       const el = form.querySelector(`[name="${f.name}"]`);
       if (!el) return;
       if (f.transient) return;
+      if (f.transient) return;
       if (f.type === 'checkbox') {
         data[f.name] = el.checked;
       } else if (f.type === 'file') {
+        const existing = JSON.parse(el.dataset.existing || '[]');
+        if (f.multiple) {
+          data[f.name] = existing;
+        } else {
+          data[f.name] = existing[0] || null;
+        }
         const existing = JSON.parse(el.dataset.existing || '[]');
         if (f.multiple) {
           data[f.name] = existing;
@@ -317,6 +376,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(data),
       credentials: 'same-origin'
+      body: JSON.stringify(data),
+      credentials: 'same-origin'
     });
     if (resp.ok) {
       const saved = await resp.json();
@@ -326,10 +387,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         Array.from(item.input.files).forEach(f => fd.append('file', f));
         const urlUpload = item.field.uploadEndpoint.replace('$id', itemId);
         await fetch(urlUpload, {method: 'POST', body: fd, credentials: 'same-origin'});
+        await fetch(urlUpload, {method: 'POST', body: fd, credentials: 'same-origin'});
       }
       closeModal();
       fetchItems();
     } else {
+      const msg = await resp.text();
+      alert('Erreur lors de la sauvegarde: ' + msg);
       const msg = await resp.text();
       alert('Erreur lors de la sauvegarde: ' + msg);
     }
@@ -337,6 +401,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function deleteItem(id) {
     if (!confirm('Supprimer cet élément ?')) return;
+    await fetch('/api/' + resource + '/' + id, { method: 'DELETE', credentials: 'same-origin' });
     await fetch('/api/' + resource + '/' + id, { method: 'DELETE', credentials: 'same-origin' });
     fetchItems();
   }

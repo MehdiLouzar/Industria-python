@@ -88,9 +88,13 @@ WITH ins AS (
 )
 INSERT INTO zones (
   id, zone_type_id, is_available,
+  id, zone_type_id, is_available,
   region_id, total_area, total_parcels, available_parcels, color, centroid
 )
 SELECT
+  ins.id,
+  (SELECT id FROM zone_types WHERE name = 'privée'),
+  TRUE,
   ins.id,
   (SELECT id FROM zone_types WHERE name = 'privée'),
   TRUE,
@@ -103,6 +107,10 @@ FROM ins;
 DO $$
 DECLARE
   zone_id integer := (
+    SELECT z.id
+    FROM zones z
+    JOIN spatial_entities se ON se.id = z.id
+    WHERE se.name = 'Zone A'
     SELECT z.id
     FROM zones z
     JOIN spatial_entities se ON se.id = z.id

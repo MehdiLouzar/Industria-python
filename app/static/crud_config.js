@@ -43,10 +43,18 @@ const CRUD_CONFIG = {
       {name: 'name', label: 'Nom', type: 'text'}
     ]
   },
+  zone_types: {
+    display: ['id', 'name'],
+    fields: [
+      {name: 'name', label: 'Nom', type: 'text'}
+    ]
+  },
   zones: {
+    display: ['id', 'name', 'zone_type_id', 'region_id'],
     display: ['id', 'name', 'zone_type_id', 'region_id'],
     fields: [
       {name: 'name', label: 'Nom', type: 'text'},
+      {name: 'zone_type_id', label: 'Type', type: 'select', optionsEndpoint: '/api/zone_types'},
       {name: 'zone_type_id', label: 'Type', type: 'select', optionsEndpoint: '/api/zone_types'},
       {name: 'is_available', label: 'Disponible', type: 'checkbox'},
       {name: 'country_id', label: 'Pays', type: 'select', optionsEndpoint: '/api/countries', transient: true},
@@ -54,6 +62,10 @@ const CRUD_CONFIG = {
       {name: 'total_area', label: 'Superficie totale', type: 'number'},
       {name: 'total_parcels', label: 'Parcelles totales', type: 'number'},
       {name: 'available_parcels', label: 'Parcelles dispo', type: 'number'},
+      {name: 'color', label: 'Couleur', type: 'text'},
+      {name: 'lambert_x', label: 'Lambert X', type: 'number'},
+      {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
+      ]
       {name: 'color', label: 'Couleur', type: 'text'},
       {name: 'lambert_x', label: 'Lambert X', type: 'number'},
       {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
@@ -77,6 +89,10 @@ const CRUD_CONFIG = {
       {name: 'is_showroom', label: 'Showroom', type: 'checkbox'},
       {name: 'CoS', label: 'CoS', type: 'number'},
       {name: 'CuS', label: 'CuS', type: 'number'},
+      {name: 'photos', label: 'Photos', type: 'file', multiple: true, uploadEndpoint: '/api/parcels/$id/photo'},
+      {name: 'lambert_x', label: 'Lambert X', type: 'number'},
+      {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
+      ]
       {name: 'photos', label: 'Photos', type: 'file', multiple: true, uploadEndpoint: '/api/parcels/$id/photo'},
       {name: 'lambert_x', label: 'Lambert X', type: 'number'},
       {name: 'lambert_y', label: 'Lambert Y', type: 'number'}
