@@ -7,7 +7,7 @@ from ..utils import point_from_lambert, lambert_from_point
 class ParcelSchema(SQLAlchemyAutoSchema):
     id = fields.Int(dump_only=True)
     entity_type = fields.Str(dump_only=True)
-    
+
     area = fields.Float()
     CoS = fields.Float(attribute="CoS")  
     CuS = fields.Float(attribute="CuS") 

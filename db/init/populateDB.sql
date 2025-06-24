@@ -1,17 +1,27 @@
--- 1) Vider toutes les tables et réinitialiser les identifiants
-TRUNCATE
-  appointments,
-  parcels,
-  zones,
-  spatial_entities,
-  appointment_statuses,
-  activities,
-  amenities,
-  roles,
-  regions,
-  zone_types,
-  countries
-RESTART IDENTITY CASCADE;
+-- Ensure zone types table and column exist before inserting data
+CREATE TABLE IF NOT EXISTS zone_types (
+  id   SERIAL PRIMARY KEY,
+  name VARCHAR NOT NULL UNIQUE
+);
+
+ALTER TABLE zones ADD COLUMN IF NOT EXISTS zone_type_id INTEGER;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='zones' AND column_name='zone_type'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='zones' AND column_name='zone_type_id'
+  ) THEN
+    ALTER TABLE zones RENAME COLUMN zone_type TO zone_type_id;
+  END IF;
+END$$;
+
+ALTER TABLE zones
+  ADD CONSTRAINT IF NOT EXISTS zones_zone_type_id_fkey
+  FOREIGN KEY (zone_type_id) REFERENCES zone_types(id);
 
 -- Pays
 INSERT INTO countries (id, name, code)
@@ -101,9 +111,10 @@ DO $$
 DECLARE
   -- On récupère une fois pour toutes l'id de la zone 'Zone A'
   zone_id integer := (
-    SELECT id
-    FROM zones
-    WHERE name = 'Zone A'
+    SELECT z.id
+    FROM zones z
+    JOIN spatial_entities se ON se.id = z.id
+    WHERE se.name = 'Zone A'
     LIMIT 1
   );
   -- Tableau de WKT pour les 10 parcelles
