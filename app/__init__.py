@@ -40,6 +40,7 @@ def create_app():
         "roles",
         "users",
         "amenities",
+        "zone_types",
         "zones",
         "activities",
         "parcels",

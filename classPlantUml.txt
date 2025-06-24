@@ -50,11 +50,14 @@ class Amenity {
   +icon: Text
 }
 
+class ZoneType {
+  +id: Integer
+  +name: String
+}
+
 class Zone {
   +id: Integer
-  +county_code: String
-  +zone_type: Integer
-  +zone_description: String
+  +zone_type_id: Integer
   +is_available: Boolean
   +region_id: Integer
   +total_area: Numeric
@@ -126,6 +129,7 @@ class ParcelAmenity {
 Region "1" --> "*" Country : belongs to
 User "*" --> "1" Role : has
 Zone "*" -> "1" Region : belongs to
+Zone "*" -> "1" ZoneType : has type
 Zone "1" --|> "1" SpatialEntity : inherits
 Parcel "1" -> "*" Zone : belongs to
 Parcel "1" --|> "1" SpatialEntity : inherits

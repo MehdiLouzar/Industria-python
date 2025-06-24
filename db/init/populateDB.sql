@@ -3,6 +3,12 @@ INSERT INTO countries (id, name, code)
 VALUES (1, 'Maroc', 'MA')
 ON CONFLICT DO NOTHING;
 
+-- Types de zone
+INSERT INTO zone_types (id, name) VALUES
+  (1, 'privée'),
+  (2, 'public')
+ON CONFLICT DO NOTHING;
+
 -- Régions
 INSERT INTO regions (id, name, country_id) VALUES
   (1, 'Tanger-Tétouan-Al Hoceïma', 1),
@@ -63,11 +69,13 @@ WITH ins AS (
   RETURNING id, geometry
 )
 INSERT INTO zones (
-  id, county_code, zone_type, zone_description, is_available,
+  id, zone_type_id, is_available,
   region_id, total_area, total_parcels, available_parcels, color, centroid
 )
 SELECT
-  ins.id, 'MA-RB', 1, 'Zone test', TRUE,
+  ins.id,
+  (SELECT id FROM zone_types WHERE name = 'privée'),
+  TRUE,
   (SELECT id FROM regions WHERE name = 'Rabat-Salé-Kénitra'),
   ST_Area(ins.geometry::geography)/10000.0, 10, 7, '#123456',
   ST_Centroid(ins.geometry)
@@ -76,11 +84,11 @@ FROM ins;
 -- Parcelles (cos et cus sont en pourcentage)
 DO $$
 DECLARE
-  -- On récupère une fois pour toutes l'id de la zone MA-RB
+  -- On récupère une fois pour toutes l'id de la zone 'Zone A'
   zone_id integer := (
     SELECT id
     FROM zones
-    WHERE county_code = 'MA-RB'
+    WHERE name = 'Zone A'
     LIMIT 1
   );
   -- Tableau de WKT pour les 10 parcelles
