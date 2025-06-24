@@ -69,13 +69,13 @@ WITH ins AS (
   RETURNING id, geometry
 )
 INSERT INTO zones (
-  id, zone_type_id, zone_description, is_available,
+  id, zone_type_id, is_available,
   region_id, total_area, total_parcels, available_parcels, color, centroid
 )
 SELECT
   ins.id,
   (SELECT id FROM zone_types WHERE name = 'privée'),
-  'Zone test', TRUE,
+  TRUE,
   (SELECT id FROM regions WHERE name = 'Rabat-Salé-Kénitra'),
   ST_Area(ins.geometry::geography)/10000.0, 10, 7, '#123456',
   ST_Centroid(ins.geometry)

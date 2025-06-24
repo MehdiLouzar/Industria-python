@@ -27,6 +27,8 @@ END$$;
 ALTER TABLE zones
     ADD COLUMN IF NOT EXISTS zone_type_id INTEGER;
 
+ALTER TABLE zones DROP COLUMN IF EXISTS zone_description;
+
 ALTER TABLE zones DROP COLUMN IF EXISTS county_code;
 
 ALTER TABLE zones

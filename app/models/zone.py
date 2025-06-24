@@ -7,7 +7,6 @@ class Zone(SpatialEntity):
     id = db.Column(db.Integer, db.ForeignKey('spatial_entities.id'), primary_key=True)
 
     zone_type_id = db.Column(db.Integer, db.ForeignKey('zone_types.id'))
-    zone_description = db.Column(db.String)
     is_available = db.Column(db.Boolean, default=True)
     region_id = db.Column(db.Integer, db.ForeignKey('regions.id'))
     total_area = db.Column(db.Numeric)

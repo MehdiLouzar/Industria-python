@@ -58,7 +58,6 @@ class ZoneType {
 class Zone {
   +id: Integer
   +zone_type_id: Integer
-  +zone_description: String
   +is_available: Boolean
   +region_id: Integer
   +total_area: Numeric
