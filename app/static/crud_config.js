@@ -139,11 +139,10 @@ const CRUD_CONFIG = {
   },
 
   appointments: {
-    display: ['id', 'parcel_id', 'appointment_status_id', 'user_id', 'requested_date'],
+    display: ['id', 'parcel_id', 'appointment_status_id', 'requested_date'],
     fields: [
       { name: 'parcel_id', label: 'Parcelle', type: 'select', optionsEndpoint: '/api/parcels' },
       { name: 'appointment_status_id', label: 'Statut', type: 'select', optionsEndpoint: '/api/appointment_statuses' },
-      { name: 'user_id', label: 'Utilisateur', type: 'select', optionsEndpoint: '/api/users' },
       { name: 'requested_date', label: 'Date demandée', type: 'date' },
       { name: 'confirmed_date', label: 'Date confirmée', type: 'datetime-local' },
       { name: 'appointment_message', label: 'Message', type: 'text' },
