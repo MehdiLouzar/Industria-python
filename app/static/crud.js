@@ -139,6 +139,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const existing = Array.isArray(item[f.name]) ? [...item[f.name]] : (item[f.name] ? [item[f.name]] : []);
         input.dataset.existing = JSON.stringify(existing);
 
+        // Keep selected files across multiple changes for multi-upload fields
+        const selectedFiles = [];
+
+        function syncFileInput() {
+          const dt = new DataTransfer();
+          selectedFiles.forEach(f => dt.items.add(f));
+          input.files = dt.files;
+        }
+
         function renderPreviews() {
           preview.innerHTML = '';
           existing.forEach((path, idx) => {
@@ -160,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             preview.append(holder);
           });
 
-          Array.from(input.files).forEach((file, idx) => {
+          selectedFiles.forEach((file, idx) => {
             const holder = document.createElement('div');
             holder.className = 'relative inline-block';
             const img = document.createElement('img');
@@ -171,9 +180,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             rm.innerHTML = '&times;';
             rm.className = 'absolute -top-1 -right-1 bg-white rounded-full text-red-600 text-xs';
             rm.addEventListener('click', () => {
-              const dt = new DataTransfer();
-              Array.from(input.files).forEach((f, i) => { if (i !== idx) dt.items.add(f); });
-              input.files = dt.files;
+              selectedFiles.splice(idx, 1);
+              syncFileInput();
               renderPreviews();
             });
             holder.append(img, rm);
@@ -181,7 +189,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
 
-        input.addEventListener('change', renderPreviews);
+        input.addEventListener('change', () => {
+          if (!f.multiple) {
+            existing.length = 0;
+            input.dataset.existing = JSON.stringify(existing);
+            selectedFiles.length = 0;
+          }
+          Array.from(input.files).forEach(f => selectedFiles.push(f));
+          syncFileInput();
+          renderPreviews();
+        });
+
+        // Initial sync for edit mode
+        syncFileInput();
         renderPreviews();
         wrapper.append(input, preview);
       } 
