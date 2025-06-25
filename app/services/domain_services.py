@@ -60,6 +60,7 @@ class ZoneService(CRUDService):
         if obj.is_available is False:
             for parcel in obj.parcels:
                 parcel.is_free = False
+            db.session.flush()
         return super().update(obj)
 
     def delete(self, obj):
