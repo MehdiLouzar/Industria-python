@@ -92,9 +92,10 @@ const CRUD_CONFIG = {
   },
 
   parcels: {
-    display: ['id', 'zone_id', 'area', 'is_free'],
+    display: ['id', 'name', 'zone_id', 'area', 'is_free'],
     fields: [
       { name: 'zone_id', label: 'Zone', type: 'select', optionsEndpoint: '/api/zones' },
+      { name: 'name', label: 'Nom', type: 'text' },
       { name: 'area', label: 'Superficie', type: 'number' },
       { name: 'is_free', label: 'Libre', type: 'checkbox' },
       { name: 'is_available', label: 'Disponible', type: 'checkbox' },

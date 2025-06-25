@@ -347,7 +347,7 @@ async function initCrud() {
   async function openForm(item = null) {
     currentId = item?.id || null;
     formTitle.textContent = item ? 'Modifier' : 'Créer';
-    renderForm(item);
+    renderForm(item || {});
     if (deleteBtn) {
       if (item) deleteBtn.classList.remove('hidden');
       else deleteBtn.classList.add('hidden');
