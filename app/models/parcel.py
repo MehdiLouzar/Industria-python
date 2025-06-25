@@ -20,7 +20,12 @@ class Parcel(SpatialEntity):
         'polymorphic_identity': 'parcel'
     }
 
-    zone = db.relationship('Zone', back_populates='parcels',
-                           foreign_keys=[zone_id])
-    appointments = db.relationship('Appointment', back_populates='parcel')
-    amenities = db.relationship('ParcelAmenity', back_populates='parcel')
+    zone = db.relationship(
+        'Zone', back_populates='parcels', foreign_keys=[zone_id]
+    )
+    appointments = db.relationship(
+        'Appointment', back_populates='parcel', cascade='all, delete-orphan'
+    )
+    amenities = db.relationship(
+        'ParcelAmenity', back_populates='parcel', cascade='all, delete-orphan'
+    )

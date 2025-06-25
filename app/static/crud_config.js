@@ -35,6 +35,7 @@ const CRUD_CONFIG = {
 
   amenities: {
     display: ['id', 'label'],
+    cascadeMessage: 'Les liaisons avec les parcelles seront supprimées. Continuer ?',
     fields: [
       { name: 'amenities_key', label: 'Key', type: 'text' },
       { name: 'label', label: 'Label', type: 'text' },
@@ -51,6 +52,7 @@ const CRUD_CONFIG = {
 
   zones: {
     display: ['id', 'name', 'zone_type_id', 'region_id'],
+    cascadeMessage: 'Cette action supprimera aussi les parcelles et activités liées. Continuer ?',
     fields: [
       { name: 'name', label: 'Nom', type: 'text' },
       { name: 'zone_type_id', label: 'Type', type: 'select', optionsEndpoint: '/api/zone_types' },
@@ -84,6 +86,7 @@ const CRUD_CONFIG = {
 
   activities: {
     display: ['id', 'label'],
+    cascadeMessage: 'Les liaisons avec les zones seront supprimées. Continuer ?',
     fields: [
       { name: 'activities_key', label: 'Key', type: 'text' },
       { name: 'label', label: 'Label', type: 'text' },
@@ -92,8 +95,10 @@ const CRUD_CONFIG = {
   },
 
   parcels: {
-    display: ['id', 'zone_id', 'area', 'is_free'],
+    display: ['id', 'name', 'zone_id', 'area', 'is_free'],
+    cascadeMessage: 'Les rendez-vous et équipements liés seront aussi supprimés. Poursuivre ?',
     fields: [
+      { name: 'name', label: 'Nom', type: 'text' },
       { name: 'zone_id', label: 'Zone', type: 'select', optionsEndpoint: '/api/zones' },
       { name: 'area', label: 'Superficie', type: 'number' },
       { name: 'is_free', label: 'Libre', type: 'checkbox' },
