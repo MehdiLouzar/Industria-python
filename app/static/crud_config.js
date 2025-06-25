@@ -100,6 +100,7 @@ const CRUD_CONFIG = {
     fields: [
       { name: 'name', label: 'Nom', type: 'text' },
       { name: 'zone_id', label: 'Zone', type: 'select', optionsEndpoint: '/api/zones' },
+      { name: 'name', label: 'Nom', type: 'text' },
       { name: 'area', label: 'Superficie', type: 'number' },
       { name: 'is_free', label: 'Libre', type: 'checkbox' },
       { name: 'is_available', label: 'Disponible', type: 'checkbox' },
