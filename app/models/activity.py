@@ -8,4 +8,6 @@ class Activity(db.Model):
     label = db.Column(db.String)
     icon = db.Column(db.Text)
 
-    zones = db.relationship('ZoneActivity', back_populates='activity')
+    zones = db.relationship(
+        'ZoneActivity', back_populates='activity', cascade='all, delete-orphan'
+    )

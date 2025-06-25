@@ -2,6 +2,7 @@ from flask import abort
 from geoalchemy2.shape import to_shape, from_shape
 
 from .crud_service import CRUDService
+from .. import db
 from ..models import (
     Country,
     Region,
@@ -43,7 +44,12 @@ class ZoneService(CRUDService):
         if obj.geometry is not None:
             shp = to_shape(obj.geometry)
             obj.centroid = from_shape(shp.centroid, srid=4326)
-        return super().create(obj)
+        created = super().create(obj)
+        if created.is_available is False:
+            for parcel in created.parcels:
+                parcel.is_free = False
+            db.session.commit()
+        return created
 
     def update(self, obj):
         if obj.region_id and not Region.query.get(obj.region_id):
@@ -51,11 +57,14 @@ class ZoneService(CRUDService):
         if obj.geometry is not None:
             shp = to_shape(obj.geometry)
             obj.centroid = from_shape(shp.centroid, srid=4326)
+        if obj.is_available is False:
+            for parcel in obj.parcels:
+                parcel.is_free = False
+            db.session.flush()
         return super().update(obj)
 
     def delete(self, obj):
-        if obj.parcels:
-            abort(400, "Cannot delete zone with parcels")
+        """Delete a zone and all linked parcels."""
         super().delete(obj)
 
 
@@ -63,11 +72,17 @@ class ParcelService(CRUDService):
     def create(self, obj):
         if obj.zone_id and not Zone.query.get(obj.zone_id):
             abort(400, "Zone not found")
+        zone = Zone.query.get(obj.zone_id) if obj.zone_id else None
+        if zone and zone.is_available is False:
+            obj.is_free = False
         return super().create(obj)
 
     def update(self, obj):
         if obj.zone_id and not Zone.query.get(obj.zone_id):
             abort(400, "Zone not found")
+        zone = Zone.query.get(obj.zone_id) if obj.zone_id else None
+        if zone and zone.is_available is False:
+            obj.is_free = False
         return super().update(obj)
 
 

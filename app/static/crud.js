@@ -344,12 +344,12 @@ async function initCrud() {
     container.append(pag);
   }
 
-  async function openForm(item = null) {
-    currentId = item?.id || null;
-    formTitle.textContent = item ? 'Modifier' : 'Créer';
+  async function openForm(item = {}) {
+    currentId = item.id || null;
+    formTitle.textContent = currentId ? 'Modifier' : 'Créer';
     renderForm(item);
     if (deleteBtn) {
-      if (item) deleteBtn.classList.remove('hidden');
+      if (currentId) deleteBtn.classList.remove('hidden');
       else deleteBtn.classList.add('hidden');
     }
 
@@ -460,6 +460,7 @@ async function initCrud() {
 
   async function deleteItem(id) {
     if (!confirm('Supprimer cet élément ?')) return;
+    if (cfg.cascadeMessage && !confirm(cfg.cascadeMessage)) return;
     await fetch(`/api/${resource}/${id}`, { method: 'DELETE', credentials: 'same-origin' });
     fetchItems();
   }

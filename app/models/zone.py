@@ -20,7 +20,11 @@ class Zone(SpatialEntity):
     }
 
     region = db.relationship('Region', back_populates='zones')
-    parcels = db.relationship('Parcel', back_populates='zone',
-                             foreign_keys='Parcel.zone_id')
-    activities = db.relationship('ZoneActivity', back_populates='zone')
+    parcels = db.relationship(
+        'Parcel', back_populates='zone', foreign_keys='Parcel.zone_id',
+        cascade='all, delete-orphan'
+    )
+    activities = db.relationship(
+        'ZoneActivity', back_populates='zone', cascade='all, delete-orphan'
+    )
     zone_type = db.relationship('ZoneType', back_populates='zones')

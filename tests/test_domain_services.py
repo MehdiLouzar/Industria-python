@@ -38,3 +38,30 @@ def test_parcel_create_missing_zone(app):
     with pytest.raises(Exception):
         svc.create(parcel)
 
+
+def test_parcel_in_unavailable_zone_not_free(app):
+    region = Region(name='R')
+    zone = Zone(entity_type='zone', name='Z', region=region, is_available=False)
+    db.session.add_all([region, zone])
+    db.session.commit()
+
+    svc = ParcelService(Parcel)
+    parcel = Parcel(entity_type='parcel', name='P', zone_id=zone.id, is_free=True)
+    svc.create(parcel)
+
+    assert parcel.is_free is False
+
+
+def test_zone_update_unavailable_sets_parcels_not_free(app):
+    region = Region(name='R')
+    zone = Zone(entity_type='zone', name='Z', region=region, is_available=True)
+    parcel = Parcel(entity_type='parcel', name='P', zone=zone, is_free=True)
+    db.session.add_all([region, zone, parcel])
+    db.session.commit()
+
+    svc = ZoneService(Zone)
+    zone.is_available = False
+    svc.update(zone)
+
+    assert parcel.is_free is False
+
