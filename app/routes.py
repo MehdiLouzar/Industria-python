@@ -12,6 +12,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 import os
+from geoalchemy2.shape import to_shape
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_restx import Resource
 from . import db
@@ -368,3 +369,21 @@ def upload_activity_icon(activity_id):
 def manage_resource(resource):
     """Generic HTML page for CRUD management."""
     return render_template("crud.html", resource=resource)
+
+
+@bp.route("/map/zones")
+def zones_geojson():
+    """Return all zones centroids as GeoJSON."""
+    zones = Zone.query.all()
+    features = []
+    for z in zones:
+        geom = z.centroid or z.geometry
+        if geom is None:
+            continue
+        features.append({
+            "type": "Feature",
+            "id": z.id,
+            "geometry": to_shape(geom).__geo_interface__,
+            "properties": {"name": z.name},
+        })
+    return jsonify({"type": "FeatureCollection", "features": features})
