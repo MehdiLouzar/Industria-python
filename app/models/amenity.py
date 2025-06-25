@@ -8,4 +8,6 @@ class Amenity(db.Model):
     label = db.Column(db.String)
     icon = db.Column(db.Text)
 
-    parcels = db.relationship('ParcelAmenity', back_populates='amenity')
+    parcels = db.relationship(
+        'ParcelAmenity', back_populates='amenity', cascade='all, delete-orphan'
+    )
