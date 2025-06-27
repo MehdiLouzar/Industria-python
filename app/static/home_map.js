@@ -14,10 +14,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Initialisation de la carte Leaflet
   const map = L.map(mapEl, {
-    // Empêche l’affichage de copies horizontales du monde
-    worldCopyJump: true,           // saute automatiquement à la copie principale :contentReference[oaicite:0]{index=0}
+    // Empêche l'affichage de copies horizontales du monde
+    // saute automatiquement à la copie principale
+    worldCopyJump: true,
     maxBounds: moroccoBounds,      // limite le pannage au Maroc
-    maxBoundsViscosity: 1.0        // colle la vue à ces bornes
+    maxBoundsViscosity: 1.0,       // colle la vue à ces bornes
+    maxZoom: 18
   }).setView([31.5, -7.0], 6);
 
   // Ajout du calque Mapbox GL, sans répéter le monde
@@ -25,10 +27,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     accessToken: MAPBOX_TOKEN,
     style: 'mapbox://styles/mapbox/streets-v12',
     gl: mapboxgl,
-    // Désactive le rendu de copies multiples du monde :contentReference[oaicite:1]{index=1}
-    mapboxOptions: {
-      renderWorldCopies: false
-    }
+    // Désactive le rendu de copies multiples du monde
+    renderWorldCopies: false
   }).addTo(map);
 
   // Clustering et chargement des zones
