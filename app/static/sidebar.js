@@ -4,6 +4,11 @@ function initSidebar() {
   const closeBtn = document.getElementById('sidebar-close');
   const map = document.getElementById('map') || document.getElementById('zone-map');
 
+  // Always ensure the map is visible when loading a new page
+  if (map && map.classList.contains('hidden')) {
+    map.classList.remove('hidden');
+  }
+
   function hideMap() {
     if (map && window.innerWidth < 768) {
       map.classList.add('hidden');
