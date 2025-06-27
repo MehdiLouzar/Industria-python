@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Parcelle {{ parcel.name }}{% endblock %}
+
+{% block content %}
+  <h1 class="text-2xl font-bold mb-2">Parcelle {{ parcel.name }}</h1>
+  <p>Surface: {{ parcel.area }}</p>
+  <p>CoS: {{ parcel.CoS }}</p>
+  <p>CuS: {{ parcel.CuS }}</p>
+  <a href="{{ url_for('main.reserve_parcel', parcel_id=parcel.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded">Réserver</a>
+{% endblock %}

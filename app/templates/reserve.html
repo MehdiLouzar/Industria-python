@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Réservation parcelle {{ parcel.name }}{% endblock %}
+
+{% block content %}
+  <h1 class="text-2xl font-bold mb-4">Réserver la parcelle {{ parcel.name }}</h1>
+  <form method="post" class="space-y-4 max-w-md">
+    <input type="text" name="company" required placeholder="Entreprise" class="border p-2 w-full" />
+    <input type="text" name="phone" required placeholder="Téléphone" class="border p-2 w-full" />
+    <input type="text" name="title" placeholder="Titre" class="border p-2 w-full" />
+    <textarea name="message" placeholder="Message" class="border p-2 w-full"></textarea>
+    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Envoyer</button>
+  </form>
+{% endblock %}
