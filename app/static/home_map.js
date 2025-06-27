@@ -6,6 +6,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // Désactive la télémétrie Mapbox pour éviter les requêtes events.mapbox.com
+  if (typeof mapboxgl.setTelemetryEnabled === 'function') {
+    mapboxgl.setTelemetryEnabled(false);
+  }
+  if (mapboxgl.config) {
+    mapboxgl.config.EVENTS_URL = null;
+  }
+
   // Définition des limites du Maroc pour verrouiller le cadrage
   const moroccoBounds = [
     [20.0, -17.0],  // sud-ouest (lat, lon)
