@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import date
 from geoalchemy2.shape import to_shape
+from .utils import shapely_to_wgs84
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_restx import Resource
 from . import db
@@ -381,10 +382,11 @@ def zones_geojson():
         geom = z.centroid or z.geometry
         if geom is None:
             continue
+        shp = shapely_to_wgs84(to_shape(geom), getattr(geom, "srid", 4326))
         features.append({
             "type": "Feature",
             "id": z.id,
-            "geometry": to_shape(geom).__geo_interface__,
+            "geometry": shp.__geo_interface__,
             "properties": {"name": z.name},
         })
     return jsonify({"type": "FeatureCollection", "features": features})
@@ -393,15 +395,19 @@ def zones_geojson():
 def zone_full_geojson(zone_id):
     """Return geometry, parcels and details for a zone."""
     zone = Zone.query.get_or_404(zone_id)
-    zone_geom = to_shape(zone.geometry).__geo_interface__ if zone.geometry else None
+    zone_geom = None
+    if zone.geometry is not None:
+        shp = shapely_to_wgs84(to_shape(zone.geometry), getattr(zone.geometry, "srid", 4326))
+        zone_geom = shp.__geo_interface__
     parcels = []
     for p in zone.parcels:
         if p.geometry is None:
             continue
+        shp = shapely_to_wgs84(to_shape(p.geometry), getattr(p.geometry, "srid", 4326))
         parcels.append({
             "type": "Feature",
             "id": p.id,
-            "geometry": to_shape(p.geometry).__geo_interface__,
+            "geometry": shp.__geo_interface__,
             "properties": {
                 "name": p.name,
                 "is_free": p.is_free,
