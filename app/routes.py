@@ -12,6 +12,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 import os
+from datetime import date
 from geoalchemy2.shape import to_shape
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_restx import Resource
@@ -387,3 +388,79 @@ def zones_geojson():
             "properties": {"name": z.name},
         })
     return jsonify({"type": "FeatureCollection", "features": features})
+
+@bp.route("/map/zones/<int:zone_id>")
+def zone_full_geojson(zone_id):
+    """Return geometry, parcels and details for a zone."""
+    zone = Zone.query.get_or_404(zone_id)
+    zone_geom = to_shape(zone.geometry).__geo_interface__ if zone.geometry else None
+    parcels = []
+    for p in zone.parcels:
+        if p.geometry is None:
+            continue
+        parcels.append({
+            "type": "Feature",
+            "id": p.id,
+            "geometry": to_shape(p.geometry).__geo_interface__,
+            "properties": {
+                "name": p.name,
+                "is_free": p.is_free,
+                "is_showroom": p.is_showroom,
+                "area": float(p.area) if p.area is not None else None,
+                "CoS": float(p.CoS) if p.CoS is not None else None,
+                "CuS": float(p.CuS) if p.CuS is not None else None,
+            },
+        })
+    activities = [za.activity.label for za in zone.activities]
+    return jsonify({
+        "id": zone.id,
+        "name": zone.name,
+        "description": zone.description,
+        "available_parcels": zone.available_parcels,
+        "color": zone.color,
+        "activities": activities,
+        "is_available": zone.is_available,
+        "geometry": zone_geom,
+        "parcels": {"type": "FeatureCollection", "features": parcels},
+    })
+
+
+@bp.route("/zones/<int:zone_id>")
+def zone_page(zone_id):
+    """Display a map focused on a single zone."""
+    zone = Zone.query.get_or_404(zone_id)
+    return render_template("zone_detail.html", zone=zone)
+
+
+@bp.route("/parcels/<int:parcel_id>")
+def parcel_page(parcel_id):
+    """Display parcel details if it belongs to an available zone."""
+    parcel = Parcel.query.get_or_404(parcel_id)
+    if not parcel.zone or not parcel.zone.is_available or not parcel.is_free:
+        abort(404)
+    return render_template("parcel_detail.html", parcel=parcel)
+
+
+@bp.route("/parcels/<int:parcel_id>/reserve", methods=["GET", "POST"])
+def reserve_parcel(parcel_id):
+    """Simple reservation form for a parcel."""
+    parcel = Parcel.query.get_or_404(parcel_id)
+    if not parcel.zone or not parcel.zone.is_available or not parcel.is_free:
+        abort(404)
+
+    if request.method == "POST":
+        status = AppointmentStatus.query.filter_by(status_name="Pending").first()
+        appt = Appointment(
+            parcel_id=parcel.id,
+            appointment_status_id=status.id if status else None,
+            requested_date=date.today(),
+            appointment_message=request.form.get("message"),
+            contact_phone=request.form.get("phone"),
+            company_name=request.form.get("company"),
+            job_title=request.form.get("title"),
+        )
+        db.session.add(appt)
+        db.session.commit()
+        return redirect(url_for("main.parcel_page", parcel_id=parcel.id))
+
+    return render_template("reserve.html", parcel=parcel)

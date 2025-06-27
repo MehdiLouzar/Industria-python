@@ -6,6 +6,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // Désactive la télémétrie Mapbox pour éviter les requêtes events.mapbox.com
+  if (typeof mapboxgl.setTelemetryEnabled === 'function') {
+    mapboxgl.setTelemetryEnabled(false);
+  }
+  if (mapboxgl.config) {
+    mapboxgl.config.EVENTS_URL = null;
+  }
+
   // Définition des limites du Maroc pour verrouiller le cadrage
   const moroccoBounds = [
     [20.0, -17.0],  // sud-ouest (lat, lon)
@@ -41,8 +49,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     L.geoJSON(data, {
       onEachFeature: (feature, layer) => {
-        const name = feature.properties?.name;
-        if (name) layer.bindPopup(name);
+        layer.on('click', async () => {
+          try {
+            const zoneResp = await fetch(`/map/zones/${feature.id}`);
+            if (!zoneResp.ok) throw new Error('load zone');
+            const zone = await zoneResp.json();
+            const link = zone.is_available ?
+              `<a href="/zones/${zone.id}" class="text-blue-600">&rarr;</a>` : '';
+            const html = `
+              <div>
+                <h3 class="font-bold mb-1">${zone.name}</h3>
+                <p>${zone.description || ''}</p>
+                <p>Parcelles disponibles: ${zone.available_parcels ?? 0}</p>
+                <p>Activités: ${zone.activities.join(', ')}</p>
+                ${link}
+              </div>`;
+            layer.bindPopup(html).openPopup();
+          } catch (e) {
+            console.error('Erreur chargement zone', e);
+          }
+        });
       }
     }).eachLayer(l => clusters.addLayer(l));
 
