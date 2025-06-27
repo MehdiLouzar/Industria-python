@@ -11,12 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (mapboxgl.config) {
     mapboxgl.config.EVENTS_URL = null;
   }
-
-  // Supprime toute carte précédente pour cet élément
   if (window._zoneMap) {
     window._zoneMap.remove();
   }
-
   const map = L.map(mapEl, {
     worldCopyJump: true,
     maxZoom: 18
