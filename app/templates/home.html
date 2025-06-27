@@ -12,14 +12,8 @@
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.16.1/mapbox-gl.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.16.1/mapbox-gl.js"></script>
-<script src="https://unpkg.com/mapbox-gl-leaflet@latest/leaflet-mapbox-gl.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script>var MAPBOX_TOKEN = "{{ mapbox_token }}";</script>
-<script src="{{ url_for('static', filename='home_map.js') }}"></script>
+  {{ super() }}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script>var MAPBOX_TOKEN = "{{ mapbox_token }}";</script>
 {% endblock %}
