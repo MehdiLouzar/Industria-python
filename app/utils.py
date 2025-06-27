@@ -1,5 +1,6 @@
 from pyproj import Transformer
 from shapely.geometry import Point
+from shapely.ops import transform
 from geoalchemy2.shape import from_shape
 
 # global transformer from Lambert 93 (EPSG:2154) to WGS84 (EPSG:4326)
@@ -18,3 +19,11 @@ def lambert_from_point(pt):
         pt = pt.centroid
     x, y = _to_lambert.transform(pt.x, pt.y)
     return x, y
+
+
+def shapely_to_wgs84(geom, srid):
+    """Return a geometry transformed to WGS84 if needed."""
+    if srid in (4326, None):
+        return geom
+    transformer = Transformer.from_crs(f"EPSG:{srid}", "EPSG:4326", always_xy=True)
+    return transform(transformer.transform, geom)
