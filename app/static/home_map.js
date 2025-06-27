@@ -30,13 +30,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     maxZoom: 18
   }).setView([31.5, -7.0], 5);
 
-  // Ajout du calque Mapbox GL, sans répéter le monde
+  // Ajoute le calque MapLibre avec le style Mapbox. MapLibre n'interprète pas
+  // l'URL "mapbox://" directement, on fournit donc l'URL HTTP complète
   L.mapboxGL({
     accessToken: MAPBOX_TOKEN,
-    style: 'mapbox://styles/mapbox/streets-v12',
+    style:
+      `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${MAPBOX_TOKEN}`,
     gl: mapboxgl,
     // Désactive le rendu de copies multiples du monde
-    renderWorldCopies: false
+    renderWorldCopies: false,
   }).addTo(map);
 
   // Clustering et chargement des zones
