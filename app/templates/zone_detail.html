@@ -20,13 +20,11 @@
       {% endfor %}
     </ul>
   {% endif %}
-
 {% endblock %}
 
 {% block scripts %}
   <script>
     var ZONE_ID = {{ zone.id }};
-    var MAPBOX_TOKEN = "{{ mapbox_token }}";
   </script>
   <script src="{{ url_for('static', filename='zone_map.js') }}"></script>
   {% if user %}

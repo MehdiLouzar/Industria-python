@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const mapEl = document.getElementById('zone-map');
-  if (!mapEl || !window.MAPBOX_TOKEN || !window.mapboxgl || typeof ZONE_ID === 'undefined') {
-    console.error('Zone map element or config missing');
+  if (!mapEl || !window.mapboxgl || typeof ZONE_ID === 'undefined') {
+    console.error('Zone map element ou maplibre manquant');
     return;
   }
 
@@ -11,16 +11,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (mapboxgl.config) {
     mapboxgl.config.EVENTS_URL = null;
   }
-
+  if (window._zoneMap) {
+    window._zoneMap.remove();
+  }
   const map = L.map(mapEl, {
     worldCopyJump: true,
     maxZoom: 18
   }).setView([31.5, -7.0], 5);
+  window._zoneMap = map;
 
   L.mapboxGL({
-    accessToken: MAPBOX_TOKEN,
-    style:
-      `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${MAPBOX_TOKEN}`,
+    style: 'https://demotiles.maplibre.org/style.json',
     gl: mapboxgl,
     renderWorldCopies: false,
   }).addTo(map);

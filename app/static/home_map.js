@@ -1,8 +1,8 @@
 // static/js/home_map.js
 document.addEventListener('DOMContentLoaded', async () => {
   const mapEl = document.getElementById('map');
-  if (!mapEl || !window.MAPBOX_TOKEN || !window.mapboxgl) {
-    console.error('Map element, token ou mapboxgl manquant');
+  if (!mapEl || !window.mapboxgl) {
+    console.error('Map element ou maplibre manquant');
     return;
   }
 
@@ -20,7 +20,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     [36.0, -0.5]    // nord-est (lat, lon)
   ];
 
-  // Initialisation de la carte Leaflet
+  // Initialisation de la carte Leaflet. Si une carte existait déjà sur cet
+  // élément, on la retire pour éviter l'erreur "Map container is already initialized".
+  if (window._industriaMap) {
+    window._industriaMap.remove();
+  }
+
   const map = L.map(mapEl, {
     // Empêche l'affichage de copies horizontales du monde
     // saute automatiquement à la copie principale
@@ -29,13 +34,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     maxBoundsViscosity: 1.0,       // colle la vue à ces bornes
     maxZoom: 18
   }).setView([31.5, -7.0], 5);
+  // Stocke la référence pour les prochains chargements éventuels
+  window._industriaMap = map;
 
-  // Ajoute le calque MapLibre avec le style Mapbox. MapLibre n'interprète pas
-  // l'URL "mapbox://" directement, on fournit donc l'URL HTTP complète
+  // Ajoute le calque MapLibre avec un style libre qui ne dépend pas du schéma
+  // "mapbox://" afin d'éviter les erreurs de chargement
   L.mapboxGL({
-    accessToken: MAPBOX_TOKEN,
-    style:
-      `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${MAPBOX_TOKEN}`,
+    style: 'https://demotiles.maplibre.org/style.json',
     gl: mapboxgl,
     // Désactive le rendu de copies multiples du monde
     renderWorldCopies: false,
