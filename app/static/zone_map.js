@@ -19,9 +19,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   L.mapboxGL({
     accessToken: MAPBOX_TOKEN,
-    style: 'mapbox://styles/mapbox/streets-v12',
+    style:
+      `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${MAPBOX_TOKEN}`,
     gl: mapboxgl,
-    renderWorldCopies: false
+    renderWorldCopies: false,
   }).addTo(map);
 
   try {
