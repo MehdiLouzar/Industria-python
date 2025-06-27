@@ -1,30 +1,19 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const mapEl = document.getElementById('zone-map');
-  if (!mapEl || !window.mapboxgl || typeof ZONE_ID === 'undefined') {
+  if (!mapEl || typeof ZONE_ID === 'undefined') {
     console.error('Zone map element ou maplibre manquant');
     return;
   }
 
-  if (typeof mapboxgl.setTelemetryEnabled === 'function') {
-    mapboxgl.setTelemetryEnabled(false);
-  }
-  if (mapboxgl.config) {
-    mapboxgl.config.EVENTS_URL = null;
-  }
-  if (window._zoneMap) {
-    window._zoneMap.remove();
-  }
-  const map = L.map(mapEl, {
-    worldCopyJump: true,
-    maxZoom: 18
-  }).setView([31.5, -7.0], 5);
-  window._zoneMap = map;
-
-  L.mapboxGL({
-    style: 'https://demotiles.maplibre.org/style.json',
-    gl: mapboxgl,
-    renderWorldCopies: false,
-  }).addTo(map);
+  const map = createBaseMap(mapEl, '_zoneMap', {
+    center: [31.5, -7.0],
+    zoom: 5,
+    leaflet: {
+      worldCopyJump: true,
+      maxZoom: 18,
+    }
+  });
+  if (!map) return;
 
   try {
     const resp = await fetch(`/map/zones/${ZONE_ID}`);

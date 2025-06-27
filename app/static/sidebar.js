@@ -4,6 +4,13 @@ function initSidebar() {
   const closeBtn = document.getElementById('sidebar-close');
   const map = document.getElementById('map') || document.getElementById('zone-map');
 
+  // Always ensure the map is visible when loading a new page
+  if (map && map.classList.contains('hidden')) {
+    map.classList.remove('hidden');
+    if (window._industriaMap) window._industriaMap.invalidateSize();
+    if (window._zoneMap) window._zoneMap.invalidateSize();
+  }
+
   function hideMap() {
     if (map && window.innerWidth < 768) {
       map.classList.add('hidden');
@@ -13,6 +20,8 @@ function initSidebar() {
   function showMap() {
     if (map && window.innerWidth < 768) {
       map.classList.remove('hidden');
+      if (window._industriaMap) window._industriaMap.invalidateSize();
+      if (window._zoneMap) window._zoneMap.invalidateSize();
     }
   }
 
