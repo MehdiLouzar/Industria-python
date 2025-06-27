@@ -31,4 +31,7 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='crud_config.js') }}"></script>
 <script src="{{ url_for('static', filename='crud.js') }}"></script>
+{% if user %}
+<script src="{{ url_for('static', filename='sidebar.js') }}"></script>
+{% endif %}
 {% endblock %}
