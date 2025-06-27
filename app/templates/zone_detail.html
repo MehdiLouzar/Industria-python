@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% set zone_id = zone.id %}
 
 {% block title %}Zone {{ zone.name }}{% endblock %}
 
@@ -23,11 +24,5 @@
 {% endblock %}
 
 {% block scripts %}
-  <script>
-    var ZONE_ID = {{ zone.id }};
-  </script>
-  <script src="{{ url_for('static', filename='zone_map.js') }}"></script>
-  {% if user %}
-    <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
-  {% endif %}
+  {{ super() }}
 {% endblock %}
