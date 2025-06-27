@@ -23,11 +23,6 @@
 {% endblock %}
 
 {% block scripts %}
-  <script>
-    var ZONE_ID = {{ zone.id }};
-  </script>
-  <script src="{{ url_for('static', filename='zone_map.js') }}"></script>
-  {% if user %}
-    <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
-  {% endif %}
+  {% set zone_id = zone.id %}
+  {{ super() }}
 {% endblock %}
