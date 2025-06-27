@@ -1,50 +1,27 @@
 // static/js/home_map.js
 document.addEventListener('DOMContentLoaded', async () => {
   const mapEl = document.getElementById('map');
-  if (!mapEl || !window.mapboxgl) {
+  if (!mapEl) {
     console.error('Map element ou maplibre manquant');
     return;
   }
 
-  // Désactive la télémétrie Mapbox pour éviter les requêtes events.mapbox.com
-  if (typeof mapboxgl.setTelemetryEnabled === 'function') {
-    mapboxgl.setTelemetryEnabled(false);
-  }
-  if (mapboxgl.config) {
-    mapboxgl.config.EVENTS_URL = null;
-  }
-
-  // Définition des limites du Maroc pour verrouiller le cadrage
   const moroccoBounds = [
     [20.0, -17.0],  // sud-ouest (lat, lon)
     [36.0, -0.5]    // nord-est (lat, lon)
   ];
 
-  // Initialisation de la carte Leaflet. Si une carte existait déjà sur cet
-  // élément, on la retire pour éviter l'erreur "Map container is already initialized".
-  if (window._industriaMap) {
-    window._industriaMap.remove();
-  }
-
-  const map = L.map(mapEl, {
-    // Empêche l'affichage de copies horizontales du monde
-    // saute automatiquement à la copie principale
-    worldCopyJump: true,
-    maxBounds: moroccoBounds,      // limite le pannage au Maroc
-    maxBoundsViscosity: 1.0,       // colle la vue à ces bornes
-    maxZoom: 18
-  }).setView([31.5, -7.0], 5);
-  // Stocke la référence pour les prochains chargements éventuels
-  window._industriaMap = map;
-
-  // Ajoute le calque MapLibre avec un style libre qui ne dépend pas du schéma
-  // "mapbox://" afin d'éviter les erreurs de chargement
-  L.mapboxGL({
-    style: 'https://demotiles.maplibre.org/style.json',
-    gl: mapboxgl,
-    // Désactive le rendu de copies multiples du monde
-    renderWorldCopies: false,
-  }).addTo(map);
+  const map = createBaseMap(mapEl, '_industriaMap', {
+    center: [31.5, -7.0],
+    zoom: 5,
+    leaflet: {
+      worldCopyJump: true,
+      maxBounds: moroccoBounds,
+      maxBoundsViscosity: 1.0,
+      maxZoom: 18,
+    }
+  });
+  if (!map) return;
 
   // Clustering et chargement des zones
   const clusters = L.markerClusterGroup();
