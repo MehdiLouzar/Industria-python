@@ -128,6 +128,8 @@
   </main>
 
   {% block scripts %}
+      
+    <script src="{{ url_for('static', filename='map_utils.js') }}"></script>
     {% if zone_id is defined %}
       <script>var ZONE_ID = {{ zone_id }};</script>
       <script src="{{ url_for('static', filename='zone_map.js') }}"></script>
