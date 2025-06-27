@@ -12,15 +12,16 @@
   <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
-  <!-- Mapbox GL CSS -->
+  <!-- MapLibre GL CSS -->
   <link
-    href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+    href="https://unpkg.com/maplibre-gl@3.4.0/dist/maplibre-gl.css"
     rel="stylesheet"
   />
 
   {% block head %}
-    <!-- Mapbox GL JS -->
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <!-- MapLibre GL JS -->
+    <script src="https://unpkg.com/maplibre-gl@3.4.0/dist/maplibre-gl.js"></script>
+    <script>window.mapboxgl = maplibregl;</script>
     <!-- Leaflet CSS -->
     <link
       rel="stylesheet"

@@ -2,11 +2,31 @@ function initSidebar() {
   const sidebar = document.getElementById('sidebar');
   const openBtn = document.getElementById('sidebar-open');
   const closeBtn = document.getElementById('sidebar-close');
+  const map = document.getElementById('map') || document.getElementById('zone-map');
+
+  function hideMap() {
+    if (map && window.innerWidth < 768) {
+      map.classList.add('hidden');
+    }
+  }
+
+  function showMap() {
+    if (map && window.innerWidth < 768) {
+      map.classList.remove('hidden');
+    }
+  }
+
   if (openBtn && sidebar) {
-    openBtn.addEventListener('click', () => sidebar.classList.remove('-translate-x-full'));
+    openBtn.addEventListener('click', () => {
+      sidebar.classList.remove('-translate-x-full');
+      hideMap();
+    });
   }
   if (closeBtn && sidebar) {
-    closeBtn.addEventListener('click', () => sidebar.classList.add('-translate-x-full'));
+    closeBtn.addEventListener('click', () => {
+      sidebar.classList.add('-translate-x-full');
+      showMap();
+    });
   }
 }
 

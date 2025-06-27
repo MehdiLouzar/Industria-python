@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     maxBounds: moroccoBounds,      // limite le pannage au Maroc
     maxBoundsViscosity: 1.0,       // colle la vue à ces bornes
     maxZoom: 18
-  }).setView([31.5, -7.0], 6);
+  }).setView([31.5, -7.0], 5);
 
   // Ajout du calque Mapbox GL, sans répéter le monde
   L.mapboxGL({
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     map.addLayer(clusters);
 
     if (clusters.getLayers().length) {
-      map.fitBounds(clusters.getBounds(), { maxZoom: 12 });
+      map.fitBounds(clusters.getBounds(), { maxZoom: 8 });
     }
   } catch (err) {
     console.error('Error loading zones', err);

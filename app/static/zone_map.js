@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const map = L.map(mapEl, {
     worldCopyJump: true,
     maxZoom: 18
-  }).setView([31.5, -7.0], 6);
+  }).setView([31.5, -7.0], 5);
 
   L.mapboxGL({
     accessToken: MAPBOX_TOKEN,
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           fillOpacity: 0.4
         }
       }).addTo(map);
-      map.fitBounds(zoneLayer.getBounds());
+      map.fitBounds(zoneLayer.getBounds(), { maxZoom: 14 });
     }
 
     if (data.parcels && data.parcels.features.length) {
