@@ -128,7 +128,12 @@
   </main>
 
   {% block scripts %}
-    <script src="{{ url_for('static', filename='home_map.js') }}"></script>
+    {% if zone_id is defined %}
+      <script>var ZONE_ID = {{ zone_id }};</script>
+      <script src="{{ url_for('static', filename='zone_map.js') }}"></script>
+    {% else %}
+      <script src="{{ url_for('static', filename='home_map.js') }}"></script>
+    {% endif %}
     {% if user %}
       <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
     {% endif %}
