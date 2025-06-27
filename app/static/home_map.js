@@ -1,8 +1,8 @@
 // static/js/home_map.js
 document.addEventListener('DOMContentLoaded', async () => {
   const mapEl = document.getElementById('map');
-  if (!mapEl || !window.MAPBOX_TOKEN || !window.mapboxgl) {
-    console.error('Map element, token ou mapboxgl manquant');
+  if (!mapEl || !window.mapboxgl) {
+    console.error('Map element ou maplibre manquant');
     return;
   }
 
@@ -30,12 +30,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     maxZoom: 18
   }).setView([31.5, -7.0], 5);
 
-  // Ajoute le calque MapLibre avec le style Mapbox. MapLibre n'interprète pas
-  // l'URL "mapbox://" directement, on fournit donc l'URL HTTP complète
+  // Ajoute le calque MapLibre avec un style libre qui ne dépend pas du schéma
+  // "mapbox://" afin d'éviter les erreurs de chargement
   L.mapboxGL({
-    accessToken: MAPBOX_TOKEN,
-    style:
-      `https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=${MAPBOX_TOKEN}`,
+    style: 'https://demotiles.maplibre.org/style.json',
     gl: mapboxgl,
     // Désactive le rendu de copies multiples du monde
     renderWorldCopies: false,
