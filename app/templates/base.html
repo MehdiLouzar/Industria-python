@@ -1,90 +1,122 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Industria{% endblock %}</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Industria{% endblock %}</title>
 
-    <!-- Icônes -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Icônes -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
-    <!-- Styles personnalisés -->
-    <style>
-        body { background-color: #fff; }
-        .gradient-border {
-            border: 1px solid transparent;
-            border-radius: 0;
-            background-image: linear-gradient(90deg, #fff, #fff), linear-gradient(90deg, #f0c14b, #a16e2b);
-            background-clip: padding-box, border-box;
-            background-origin: border-box;
-        }
-        .title { letter-spacing: -0.4px; }
-    </style>
+  <!-- Mapbox GL CSS -->
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+    rel="stylesheet"
+  />
 
-    {% block head %}{% endblock %}
+  {% block head %}
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha512-sA+4B9GwQCnTAzDsoI7KD+VIJE64FULuIneMZxqlfP1d4Kfcl9KrYym0h+r6hXM8J4mgfHhksjbrYg6Y5TIQmA=="
+      crossorigin=""
+    />
+    <!-- Leaflet JS -->
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha512-ekZx2lp6iQJ0zD5C2zDR1wU9/adwSdJueqIO1LvI1MZUm70L9LjIbGdLG0Cd3KWvg/rTqZi56P8oVpC36gkBMQ=="
+      crossorigin=""
+    ></script>
+    <!-- Plugin Leaflet-Mapbox-GL -->
+    <script src="{{ url_for('static', filename='leaflet-mapbox-gl.js') }}"></script>
+  {% endblock %}
+
+  <!-- Styles personnalisés -->
+  <style>
+    body { background-color: #fff; }
+    .gradient-border {
+      border: 1px solid transparent;
+      background-image:
+        linear-gradient(90deg, #fff, #fff),
+        linear-gradient(90deg, #f0c14b, #a16e2b);
+      background-clip: padding-box, border-box;
+    }
+    .title { letter-spacing: -0.4px; }
+  </style>
 </head>
 
 <body class="min-h-screen">
-    {% if user %}
+  {% if user %}
     <div class="flex min-h-screen">
-        <aside id="sidebar" class="bg-white shadow-md w-64 h-screen overflow-y-auto fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-200">
-            <div class="px-6 py-4 flex justify-between items-center">
-                <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
-                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
-                    <span class="text-xl font-semibold text-gray-800">Industria</span>
-                </a>
-                <button id="sidebar-close" class="md:hidden text-gray-500">&times;</button>
-            </div>
-            <nav class="px-6 flex flex-col space-y-2 text-gray-700 font-medium">
-                {% for r in crud_resources %}
-                <a href="{{ url_for('main.manage_resource', resource=r) }}" class="hover:text-indigo-600 capitalize">{{ r.replace('_', ' ') }}</a>
-                {% endfor %}
-                <form action="{{ url_for('main.logout') }}" method="post" class="mt-4">
-                    <button type="submit" class="bg-red-500 text-white w-full px-3 py-1 rounded hover:bg-red-600 text-sm">Déconnexion</button>
-                </form>
-            </nav>
-        </aside>
-        <div class="flex flex-col flex-grow ml-0">
-            <header class="bg-white shadow-md h-16 flex items-center px-6 md:hidden">
-                <button id="sidebar-open" class="text-gray-500 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-                <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
-                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
-                    <span class="text-xl font-semibold text-gray-800">Industria</span>
-                </a>
-            </header>
-{% else %}
-    <div class="min-h-screen flex flex-col">
-        <header class="bg-white shadow-md h-16 flex items-center">
-            <div class="container mx-auto px-6 flex justify-between items-center">
-                <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
-                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
-                    <span class="text-xl font-semibold text-gray-800">Industria</span>
-                </a>
-                <nav class="flex space-x-6 text-gray-700 font-medium"></nav>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('main.login_form') }}" class="bg-indigo-500 text-white px-4 py-1.5 rounded hover:bg-indigo-600 text-sm">Connexion</a>
-                </div>
-            </div>
+      <aside id="sidebar" class="bg-white shadow-md w-64 h-screen overflow-y-auto fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-200">
+        <div class="px-6 py-4 flex justify-between items-center">
+          <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
+            <span class="text-xl font-semibold text-gray-800">Industria</span>
+          </a>
+          <button id="sidebar-close" class="md:hidden text-gray-500">&times;</button>
+        </div>
+        <nav class="px-6 flex flex-col space-y-2 text-gray-700 font-medium">
+          {% for r in crud_resources %}
+            <a href="{{ url_for('main.manage_resource', resource=r) }}" class="hover:text-indigo-600 capitalize">
+              {{ r.replace('_', ' ') }}
+            </a>
+          {% endfor %}
+          <form action="{{ url_for('main.logout') }}" method="post" class="mt-4">
+            <button type="submit" class="bg-red-500 text-white w-full px-3 py-1 rounded hover:bg-red-600 text-sm">
+              Déconnexion
+            </button>
+          </form>
+        </nav>
+      </aside>
+      <div class="flex flex-col flex-grow ml-0">
+        <header class="bg-white shadow-md h-16 flex items-center px-6 md:hidden">
+          <button id="sidebar-open" class="text-gray-500 mr-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
+            <span class="text-xl font-semibold text-gray-800">Industria</span>
+          </a>
         </header>
-{% endif %}
-        <main class="flex-grow container mx-auto px-6 mt-8">
-            {% block content %}{% endblock %}
-        </main>
-    </div>
-    {% if user %}
-    </div>
-    {% endif %}
+  {% else %}
+    <div class="min-h-screen flex flex-col">
+      <header class="bg-white shadow-md h-16 flex items-center">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+          <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
+            <span class="text-xl font-semibold text-gray-800">Industria</span>
+          </a>
+          <nav class="flex space-x-6 text-gray-700 font-medium"></nav>
+          <div class="flex items-center space-x-4">
+            <a href="{{ url_for('main.login_form') }}" class="bg-indigo-500 text-white px-4 py-1.5 rounded hover:bg-indigo-600 text-sm">
+              Connexion
+            </a>
+          </div>
+        </div>
+      </header>
+  {% endif %}
 
-    {% block scripts %}{% endblock %}
+  <main class="flex-grow container mx-auto px-6 mt-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}
+    <script src="{{ url_for('static', filename='home_map.js') }}"></script>
     {% if user %}
-    <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
+      <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
     {% endif %}
-  </body>
+  {% endblock %}
+</body>
 </html>

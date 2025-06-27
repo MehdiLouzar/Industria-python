@@ -20,6 +20,6 @@
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.16.1/mapbox-gl.js"></script>
 <script src="https://unpkg.com/mapbox-gl-leaflet@latest/leaflet-mapbox-gl.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script>const MAPBOX_TOKEN = "{{ mapbox_token }}";</script>
+<script>var MAPBOX_TOKEN = "{{ mapbox_token }}";</script>
 <script src="{{ url_for('static', filename='home_map.js') }}"></script>
 {% endblock %}
