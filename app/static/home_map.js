@@ -1,9 +1,17 @@
 // static/js/home_map.js
 document.addEventListener('DOMContentLoaded', async () => {
   const mapEl = document.getElementById('map');
-  if (!mapEl || !window.MAPBOX_TOKEN || !window.mapboxgl) {
-    console.error('Map element, token ou mapboxgl manquant');
+  if (!mapEl || !window.mapboxgl) {
+    console.error('Map element ou maplibre manquant');
     return;
+  }
+
+  // Désactive la télémétrie Mapbox pour éviter les requêtes events.mapbox.com
+  if (typeof mapboxgl.setTelemetryEnabled === 'function') {
+    mapboxgl.setTelemetryEnabled(false);
+  }
+  if (mapboxgl.config) {
+    mapboxgl.config.EVENTS_URL = null;
   }
 
   // Définition des limites du Maroc pour verrouiller le cadrage
@@ -12,23 +20,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     [36.0, -0.5]    // nord-est (lat, lon)
   ];
 
-  // Initialisation de la carte Leaflet
-  const map = L.map(mapEl, {
-    // Empêche l’affichage de copies horizontales du monde
-    worldCopyJump: true,           // saute automatiquement à la copie principale :contentReference[oaicite:0]{index=0}
-    maxBounds: moroccoBounds,      // limite le pannage au Maroc
-    maxBoundsViscosity: 1.0        // colle la vue à ces bornes
-  }).setView([31.5, -7.0], 6);
+  // Initialisation de la carte Leaflet. Si une carte existait déjà sur cet
+  // élément, on la retire pour éviter l'erreur "Map container is already initialized".
+  if (window._industriaMap) {
+    window._industriaMap.remove();
+  }
 
-  // Ajout du calque Mapbox GL, sans répéter le monde
+  const map = L.map(mapEl, {
+    // Empêche l'affichage de copies horizontales du monde
+    // saute automatiquement à la copie principale
+    worldCopyJump: true,
+    maxBounds: moroccoBounds,      // limite le pannage au Maroc
+    maxBoundsViscosity: 1.0,       // colle la vue à ces bornes
+    maxZoom: 18
+  }).setView([31.5, -7.0], 5);
+  // Stocke la référence pour les prochains chargements éventuels
+  window._industriaMap = map;
+
+  // Ajoute le calque MapLibre avec un style libre qui ne dépend pas du schéma
+  // "mapbox://" afin d'éviter les erreurs de chargement
   L.mapboxGL({
-    accessToken: MAPBOX_TOKEN,
-    style: 'mapbox://styles/mapbox/streets-v12',
+    style: 'https://demotiles.maplibre.org/style.json',
     gl: mapboxgl,
-    // Désactive le rendu de copies multiples du monde :contentReference[oaicite:1]{index=1}
-    mapboxOptions: {
-      renderWorldCopies: false
-    }
+    // Désactive le rendu de copies multiples du monde
+    renderWorldCopies: false,
   }).addTo(map);
 
   // Clustering et chargement des zones
@@ -41,15 +56,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     L.geoJSON(data, {
       onEachFeature: (feature, layer) => {
-        const name = feature.properties?.name;
-        if (name) layer.bindPopup(name);
+        layer.on('click', async () => {
+          try {
+            const zoneResp = await fetch(`/map/zones/${feature.id}`);
+            if (!zoneResp.ok) throw new Error('load zone');
+            const zone = await zoneResp.json();
+            const link = zone.is_available ?
+              `<a href="/zones/${zone.id}" class="text-blue-600">&rarr;</a>` : '';
+            const html = `
+              <div>
+                <h3 class="font-bold mb-1">${zone.name}</h3>
+                <p>${zone.description || ''}</p>
+                <p>Parcelles disponibles: ${zone.available_parcels ?? 0}</p>
+                <p>Activités: ${zone.activities.join(', ')}</p>
+                ${link}
+              </div>`;
+            layer.bindPopup(html).openPopup();
+          } catch (e) {
+            console.error('Erreur chargement zone', e);
+          }
+        });
       }
     }).eachLayer(l => clusters.addLayer(l));
 
     map.addLayer(clusters);
 
     if (clusters.getLayers().length) {
-      map.fitBounds(clusters.getBounds(), { maxZoom: 12 });
+      map.fitBounds(clusters.getBounds(), { maxZoom: 8 });
     }
   } catch (err) {
     console.error('Error loading zones', err);
