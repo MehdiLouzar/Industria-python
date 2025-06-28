@@ -41,6 +41,10 @@
       integrity="sha512-BQqMTQdfBhdgBOCbIYV1vJORFvFdFn2MFF4vUtdREqrDRINNX0An1zsxclHp+CE3IjDCbirOaav9VMwUjXx+qg=="
       crossorigin=""
     ></script>
+    <!-- Leaflet MarkerCluster -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.Default.css') }}" />
+    <script src="{{ url_for('static', filename='vendor/leaflet.markercluster/leaflet.markercluster.js') }}"></script>
   {% endblock %}
 
   <!-- Styles personnalisés -->
