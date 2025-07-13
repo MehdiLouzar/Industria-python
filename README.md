@@ -69,6 +69,7 @@ The full database schema generated from the models is documented in [SCHEMA.md](
 
 Zones and parcels accept Lambert Nord Maroc coordinates when created or edited.
 Provide the coordinates as pairs of `x y` values separated by newlines in the
-admin interface. Provide as many pairs as needed to describe the polygon
-defining the surface. The application converts these values to WGS84 before
-storing them in the database.
+admin interface. You may also send the same newline or semicolon separated
+string to the API.  Include as many pairs as needed to outline the surface; the
+application will close the polygon if needed and converts the values to WGS84
+before storing them in the database.

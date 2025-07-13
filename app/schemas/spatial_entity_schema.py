@@ -1,4 +1,5 @@
 from marshmallow import fields, pre_load
+import re
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from geoalchemy2.shape import to_shape
 from app.models.spatial_entity import SpatialEntity
@@ -22,6 +23,13 @@ class SpatialEntitySchema(SQLAlchemyAutoSchema):
     @pre_load
     def convert_lambert(self, data, **kwargs):
         coords = data.pop("lambert_coords", None)
+        if isinstance(coords, str):
+            parts = re.split(r"[\n;]+", coords)
+            coords = [
+                [float(n) for n in re.split(r"[,\s]+", p.strip()) if n]
+                for p in parts
+                if p.strip()
+            ]
         if coords:
             geom = polygon_from_lambert(coords)
             if geom is not None:
