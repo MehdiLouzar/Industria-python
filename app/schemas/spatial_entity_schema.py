@@ -9,9 +9,6 @@ class SpatialEntitySchema(SQLAlchemyAutoSchema):
     lambert_coords = fields.Method(
         "get_lambert_coords", dump_only=True, allow_none=True
     )
-    lambert_coords_input = fields.List(
-        fields.List(fields.Float()), load_only=True, data_key="lambert_coords"
-    )
 
     class Meta:
         model = SpatialEntity

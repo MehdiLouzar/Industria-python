@@ -37,6 +37,9 @@ def polygon_from_lambert(coords):
     if not coords:
         return None
     lon_lat = [_to_wgs84.transform(x, y) for x, y in coords]
+    # ensure polygon is closed
+    if lon_lat[0] != lon_lat[-1]:
+        lon_lat.append(lon_lat[0])
     poly = Polygon(lon_lat)
     return from_shape(poly, srid=4326)
 
@@ -49,4 +52,7 @@ def lambert_from_polygon(poly):
     if exterior is None:
         poly = poly.centroid
         return [lambert_from_point(poly)]
-    return [lambert_from_point(Point(x, y)) for x, y in exterior.coords]
+    coords = list(exterior.coords)
+    if len(coords) > 1 and coords[0] == coords[-1]:
+        coords = coords[:-1]
+    return [lambert_from_point(Point(x, y)) for x, y in coords]
