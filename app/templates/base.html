@@ -36,11 +36,7 @@
       crossorigin=""
     ></script>
     <!-- Plugin Leaflet-Mapbox-GL -->
-    <script
-      src="https://unpkg.com/mapbox-gl-leaflet@latest/leaflet-mapbox-gl.js"
-      integrity="sha512-BQqMTQdfBhdgBOCbIYV1vJORFvFdFn2MFF4vUtdREqrDRINNX0An1zsxclHp+CE3IjDCbirOaav9VMwUjXx+qg=="
-      crossorigin=""
-    ></script>
+    <script src="{{ url_for('static', filename='vendor/mapbox-gl-leaflet/leaflet-mapbox-gl.js') }}"></script>
     <!-- Leaflet MarkerCluster -->
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.Default.css') }}" />
