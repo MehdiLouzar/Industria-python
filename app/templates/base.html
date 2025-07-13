@@ -14,27 +14,21 @@
 
   <!-- MapLibre GL CSS -->
   <link
-    href="https://unpkg.com/maplibre-gl@3.4.0/dist/maplibre-gl.css"
+    href="{{ url_for('static', filename='vendor/maplibre-gl/maplibre-gl.css') }}"
     rel="stylesheet"
   />
 
   {% block head %}
     <!-- MapLibre GL JS -->
-    <script src="https://unpkg.com/maplibre-gl@3.4.0/dist/maplibre-gl.js"></script>
+    <script src="{{ url_for('static', filename='vendor/maplibre-gl/maplibre-gl.js') }}"></script>
     <script>window.mapboxgl = maplibregl;</script>
     <!-- Leaflet CSS -->
     <link
       rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w=="
-      crossorigin=""
+      href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}"
     />
     <!-- Leaflet JS -->
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg=="
-      crossorigin=""
-    ></script>
+    <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
     <!-- Plugin Leaflet-Mapbox-GL -->
     <script src="{{ url_for('static', filename='vendor/mapbox-gl-leaflet/leaflet-mapbox-gl.js') }}"></script>
     <!-- Leaflet MarkerCluster -->
