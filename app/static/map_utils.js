@@ -21,7 +21,8 @@ function createBaseMap(el, storeName, options = {}) {
     window[storeName].remove();
   }
 
-  const center = options.center || [31.5, -7.0];
+  // center coordinates are [lng, lat]
+  const center = options.center || [-7.0, 31.5];
   const zoom = options.zoom !== undefined ? options.zoom : 5;
   const map = new maplibregl.Map({
     container: el,

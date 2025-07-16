@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   ];
 
   const map = createBaseMap(mapEl, '_industriaMap', {
-    center: [31.5, -7.0],
+    // [lng, lat]
+    center: [-7.0, 31.5],
     zoom: 5,
     maxBounds: moroccoBounds,
   });
