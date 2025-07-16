@@ -73,3 +73,7 @@ admin interface. You may also send the same newline or semicolon separated
 string to the API.  Include as many pairs as needed to outline the surface; the
 application will close the polygon if needed and converts the values to WGS84
 before storing them in the database.
+
+## JavaScript implementation
+
+The web interface relies entirely on vanilla JavaScript with no frameworks. All interactions including CRUD forms and map controls are handled using modern browser APIs. Map assets (Leaflet, MapLibre and plugins) are served locally so the app works without external dependencies.
