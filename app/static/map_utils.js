@@ -31,7 +31,7 @@ function createBaseMap(el, storeName, options = {}) {
   }
 
   L.mapboxGL({
-    style: options.style || 'https://demotiles.maplibre.org/style.json',
+    style: options.style || '/static/vendor/maplibre-gl/style.json',
     gl: mapboxgl,
     renderWorldCopies: false,
   }).addTo(map);

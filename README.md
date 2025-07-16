@@ -76,4 +76,4 @@ before storing them in the database.
 
 ## JavaScript implementation
 
-The web interface relies entirely on vanilla JavaScript with no frameworks. All interactions including CRUD forms and map controls are handled using modern browser APIs. Map assets (Leaflet, MapLibre and plugins) are served locally so the app works without external dependencies.
+The web interface relies entirely on vanilla JavaScript with no frameworks. All interactions including CRUD forms and map controls are handled using modern browser APIs. Map assets (Leaflet, MapLibre and plugins) are served locally so the app works without external dependencies. The default MapLibre style is available at `static/vendor/maplibre-gl/style.json`.
