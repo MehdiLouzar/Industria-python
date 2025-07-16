@@ -29,7 +29,6 @@ def create_app():
     database_uri = os.environ.get("DATABASE_URL", default_db)
     app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["MAPBOX_TOKEN"] = os.environ.get("MAPBOX_TOKEN", "")
 
     # Folder for uploaded images
     app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
@@ -59,7 +58,6 @@ def create_app():
         return {
             "user": session.get("user"),
             "crud_resources": CRUD_RESOURCES,
-            "mapbox_token": app.config["MAPBOX_TOKEN"],
         }
 
     from .auth import SessionUser

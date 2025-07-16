@@ -1,3 +1,16 @@
+function geojsonBounds(feature) {
+  const bounds = new maplibregl.LngLatBounds();
+  const coords = feature.type === 'Feature' ? feature.geometry.coordinates : feature.coordinates;
+  (function expand(c) {
+    if (typeof c[0] === 'number') {
+      bounds.extend(c);
+    } else {
+      c.forEach(expand);
+    }
+  })(coords);
+  return bounds;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const mapEl = document.getElementById('zone-map');
   if (!mapEl || typeof ZONE_ID === 'undefined') {
@@ -8,54 +21,81 @@ document.addEventListener('DOMContentLoaded', async () => {
   const map = createBaseMap(mapEl, '_zoneMap', {
     center: [31.5, -7.0],
     zoom: 5,
-    leaflet: {
-      worldCopyJump: true,
-      maxZoom: 18,
-    }
   });
   if (!map) return;
 
-  try {
-    const resp = await fetch(`/map/zones/${ZONE_ID}`);
-    if (!resp.ok) throw new Error('failed');
-    const data = await resp.json();
+  map.on('load', async () => {
+    try {
+      const resp = await fetch(`/map/zones/${ZONE_ID}`);
+      if (!resp.ok) throw new Error('failed');
+      const data = await resp.json();
 
-    if (data.geometry) {
-      const zoneLayer = L.geoJSON(data.geometry, {
-        style: {
-          color: data.color || '#3388ff',
-          fillColor: data.color || '#3388ff',
-          weight: 2,
-          fillOpacity: 0.4
+      if (data.geometry) {
+        map.addSource('zone', { type: 'geojson', data: data.geometry });
+        map.addLayer({
+          id: 'zone-fill',
+          type: 'fill',
+          source: 'zone',
+          paint: {
+            'fill-color': data.color || '#3388ff',
+            'fill-opacity': 0.4,
+          },
+        });
+        map.addLayer({
+          id: 'zone-outline',
+          type: 'line',
+          source: 'zone',
+          paint: {
+            'line-color': data.color || '#3388ff',
+            'line-width': 2,
+          },
+        });
+        map.fitBounds(geojsonBounds(data.geometry), { maxZoom: 14 });
+      }
+
+      if (data.parcels && data.parcels.features.length) {
+        map.addSource('parcels', { type: 'geojson', data: data.parcels });
+        map.addLayer({
+          id: 'parcels-line',
+          type: 'line',
+          source: 'parcels',
+          paint: {
+            'line-color': '#666',
+            'line-width': 1,
+          },
+        });
+
+        if (data.is_available) {
+          map.on('click', 'parcels-line', (e) => {
+            const feature = e.features[0];
+            const prop = feature.properties || {};
+            if (!prop.is_free) return;
+            const html = `
+              <div>
+                <h4 class="font-bold mb-1">${prop.name}</h4>
+                <p>Surface: ${prop.area ?? ''}</p>
+                <a href="/parcels/${feature.id}" class="text-blue-600">Réserver</a>
+              </div>`;
+            new maplibregl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML(html)
+              .addTo(map);
+          });
         }
-      }).addTo(map);
-      map.fitBounds(zoneLayer.getBounds(), { maxZoom: 14 });
-    }
 
-    if (data.parcels && data.parcels.features.length) {
-      L.geoJSON(data.parcels, {
-        style: f => ({ color: '#666', weight: 1 }),
-        onEachFeature: (feature, layer) => {
-          const prop = feature.properties || {};
+        data.parcels.features.forEach((f) => {
+          const prop = f.properties || {};
           if (prop.is_showroom) {
-            const center = layer.getBounds().getCenter();
-            L.marker(center, { icon: L.divIcon({ className: 'showroom-marker', html: 'S' }) }).addTo(map);
+            const b = geojsonBounds(f);
+            const center = b.getCenter();
+            new maplibregl.Marker({ color: '#f87171' })
+              .setLngLat(center)
+              .addTo(map);
           }
-          if (data.is_available && prop.is_free) {
-            layer.on('click', () => {
-              const html = `
-                <div>
-                  <h4 class="font-bold mb-1">${prop.name}</h4>
-                  <p>Surface: ${prop.area ?? ''}</p>
-                  <a href="/parcels/${feature.id}" class="text-blue-600">Réserver</a>
-                </div>`;
-              layer.bindPopup(html).openPopup();
-            });
-          }
-        }
-      }).addTo(map);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load zone map', err);
     }
-  } catch (err) {
-    console.error('Failed to load zone map', err);
-  }
+  });
 });

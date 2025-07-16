@@ -23,20 +23,6 @@
   {% block head %}
     <!-- MapLibre GL JS -->
     <script src="{{ url_for('static', filename='vendor/maplibre-gl/maplibre-gl.js') }}"></script>
-    <script>window.mapboxgl = maplibregl;</script>
-    <!-- Leaflet CSS -->
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}"
-    />
-    <!-- Leaflet JS -->
-    <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
-    <!-- Plugin Leaflet-Mapbox-GL -->
-    <script src="{{ url_for('static', filename='vendor/mapbox-gl-leaflet/leaflet-mapbox-gl.js') }}"></script>
-    <!-- Leaflet MarkerCluster -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.Default.css') }}" />
-    <script src="{{ url_for('static', filename='vendor/leaflet.markercluster/leaflet.markercluster.js') }}"></script>
   {% endblock %}
 
   <!-- Styles personnalisés -->

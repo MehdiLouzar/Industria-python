@@ -1,16 +1,16 @@
 function disableTelemetry() {
-  if (typeof mapboxgl !== 'undefined') {
-    if (typeof mapboxgl.setTelemetryEnabled === 'function') {
-      mapboxgl.setTelemetryEnabled(false);
+  if (typeof maplibregl !== 'undefined') {
+    if (typeof maplibregl.setTelemetryEnabled === 'function') {
+      maplibregl.setTelemetryEnabled(false);
     }
-    if (mapboxgl.config) {
-      mapboxgl.config.EVENTS_URL = null;
+    if (maplibregl.config) {
+      maplibregl.config.EVENTS_URL = null;
     }
   }
 }
 
 function createBaseMap(el, storeName, options = {}) {
-  if (!el || typeof mapboxgl === 'undefined') {
+  if (!el || typeof maplibregl === 'undefined') {
     console.error('Map element or MapLibre missing');
     return null;
   }
@@ -21,20 +21,23 @@ function createBaseMap(el, storeName, options = {}) {
     window[storeName].remove();
   }
 
-  const leafletOpts = Object.assign({ worldCopyJump: true, maxZoom: 18 }, options.leaflet || {});
   const center = options.center || [31.5, -7.0];
   const zoom = options.zoom !== undefined ? options.zoom : 5;
-  const map = L.map(el, leafletOpts).setView(center, zoom);
+  const map = new maplibregl.Map({
+    container: el,
+    style: options.style || '/static/vendor/maplibre-gl/style.json',
+    center: center,
+    zoom: zoom,
+    maxZoom: options.maxZoom !== undefined ? options.maxZoom : 18,
+  });
+
+  if (options.maxBounds) {
+    map.setMaxBounds(options.maxBounds);
+  }
 
   if (storeName) {
     window[storeName] = map;
   }
-
-  L.mapboxGL({
-    style: options.style || '/static/vendor/maplibre-gl/style.json',
-    gl: mapboxgl,
-    renderWorldCopies: false,
-  }).addTo(map);
 
   return map;
 }
