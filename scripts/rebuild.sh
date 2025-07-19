@@ -5,7 +5,7 @@ set -e
 
 echo "🚀 Rebuilding Industria with automated setup..."
 
-# Remove previous containers and dangling resources
+
 echo "🧹 Cleaning up existing containers..."
 docker compose down -v
 docker system prune -f
