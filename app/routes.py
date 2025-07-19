@@ -30,8 +30,6 @@ from .services import (
 from .models import (
     Country,
     Region,
-    Role,
-    User,
     Amenity,
     Zone,
     ZoneType,
@@ -46,8 +44,6 @@ from .models import (
 from .schemas import (
     CountrySchema,
     RegionSchema,
-    RoleSchema,
-    UserSchema,
     AmenitySchema,
     ZoneSchema,
     ZoneTypeSchema,
@@ -98,45 +94,33 @@ def login():
 
     svc = LoginService()
     try:
+        # Authentification avec Keycloak
         tokens = svc.login(username, password)
         userinfo = svc.userinfo(tokens["access_token"])
+        
+        print(f"✅ Login successful for: {userinfo.get('preferred_username', username)}")
+        print(f"📧 Email: {userinfo.get('email')}")
+        print(f"🎭 Roles: {userinfo.get('realm_access', {}).get('roles', [])}")
+        
     except Exception as exc:
+        print(f"❌ Login failed: {exc}")
         abort(401, description=str(exc))
 
+    # Stocker les infos utilisateur dans la session
     session["user"] = userinfo
     user = SessionUser(userinfo)
     login_user(user)
 
-    return jsonify(tokens)
-
-
-@bp.route("/register", methods=["POST"])
-def register():
-    """Create a user in Keycloak and link it in the local database."""
-    data = request.get_json() or {}
-    username = data.get("username")
-    password = data.get("password")
-    email = data.get("email")
-    first = data.get("first_name")
-    last = data.get("last_name")
-    if not username or not password or not email:
-        abort(400, "Missing credentials")
-    svc = KeycloakAdminService()
-    try:
-        kc_id = svc.create_user(username, email, first, last, password)
-    except Exception as exc:  # pragma: no cover - pass through errors
-        abort(400, description=str(exc))
-    user = User(
-        first_name=first,
-        last_name=last,
-        email=email,
-        provider="keycloak",
-        provider_id=kc_id,
-    )
-    db.session.add(user)
-    db.session.commit()
-    return UserSchema().dump(user), 201
-
+    return jsonify({
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens.get("refresh_token"),
+        "user": {
+            "username": userinfo.get("preferred_username"),
+            "email": userinfo.get("email"),
+            "name": f"{userinfo.get('given_name', '')} {userinfo.get('family_name', '')}".strip(),
+            "roles": userinfo.get('realm_access', {}).get('roles', [])
+        }
+    })
 
 @bp.route("/logout", methods=["POST"])
 def logout():
@@ -206,8 +190,6 @@ def register_crud_routes(service: CRUDService, schema, endpoint: str):
 # Register CRUD routes for models with simple integer primary keys
 register_crud_routes(CountryService(Country), CountrySchema, "countries")
 register_crud_routes(RegionService(Region), RegionSchema, "regions")
-register_crud_routes(CRUDService(Role), RoleSchema, "roles")
-register_crud_routes(CRUDService(User), UserSchema, "users")
 register_crud_routes(CRUDService(Amenity), AmenitySchema, "amenities")
 register_crud_routes(CRUDService(ZoneType), ZoneTypeSchema, "zone_types")
 register_crud_routes(ZoneService(Zone), ZoneSchema, "zones")
