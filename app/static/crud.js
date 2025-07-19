@@ -250,6 +250,49 @@ async function initCrud() {
         renderPreviews();
         wrapper.append(input, preview);
       } 
+      else if (f.type === 'coords') {
+        input = document.createElement('div');
+        input.className = 'space-y-2';
+        input.dataset.field = f.name;
+
+        const list = document.createElement('div');
+        input.appendChild(list);
+
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.textContent = 'Ajouter';
+        addBtn.className = 'mt-2 px-2 py-1 bg-blue-600 text-white rounded';
+        input.appendChild(addBtn);
+
+        function addRow(pair) {
+          const row = document.createElement('div');
+          row.className = 'coord-row flex gap-2 items-center';
+          const x = document.createElement('input');
+          x.type = 'number';
+          x.step = 'any';
+          x.className = 'w-full border border-gray-300 p-2 rounded';
+          const y = document.createElement('input');
+          y.type = 'number';
+          y.step = 'any';
+          y.className = 'w-full border border-gray-300 p-2 rounded';
+          if (Array.isArray(pair)) {
+            x.value = pair[0];
+            y.value = pair[1];
+          }
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.textContent = '×';
+          rm.className = 'text-red-600';
+          rm.addEventListener('click', () => row.remove());
+          row.append(x, y, rm);
+          list.appendChild(row);
+        }
+
+        addBtn.addEventListener('click', () => addRow());
+        const existingPairs = item[f.name] || [];
+        if (existingPairs.length) existingPairs.forEach(addRow);
+        else addRow();
+      }
       else if (f.type === 'textarea') {
         input = document.createElement('textarea');
         input.className = 'w-full border border-gray-300 p-2 rounded';
@@ -421,6 +464,19 @@ async function initCrud() {
         const selected = Array.from(el.querySelectorAll('input[type="checkbox"]:checked')).map(c => parseInt(c.value));
         const original = JSON.parse(el.dataset.original || '[]');
         linkUpdates.push({ field: f, selected, original });
+      }
+      else if (f.type === 'coords') {
+        const rows = el.querySelectorAll('.coord-row');
+        const coords = [];
+        rows.forEach(r => {
+          const inputs = r.querySelectorAll('input[type="number"]');
+          if (inputs.length === 2) {
+            const x = parseFloat(inputs[0].value);
+            const y = parseFloat(inputs[1].value);
+            if (!isNaN(x) && !isNaN(y)) coords.push([x, y]);
+          }
+        });
+        data[f.name] = coords;
       }
       else if (f.type === 'textarea' && f.name === 'lambert_coords') {
         const coords = el.value.trim()

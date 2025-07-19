@@ -70,7 +70,7 @@ const CRUD_CONFIG = {
       { name: 'total_parcels', label: 'Parcelles totales', type: 'number' },
       { name: 'available_parcels', label: 'Parcelles dispo', type: 'number' },
       { name: 'color', label: 'Couleur', type: 'text' },
-      { name: 'lambert_coords', label: 'Lambert coords', type: 'textarea' },
+      { name: 'lambert_coords', label: 'Lambert coords', type: 'coords' },
       {
         name: 'activities',
         label: 'Activités',
@@ -113,7 +113,7 @@ const CRUD_CONFIG = {
         multiple: true,
         uploadEndpoint: '/api/parcels/$id/photo'
       },
-      { name: 'lambert_coords', label: 'Lambert coords', type: 'textarea' },
+      { name: 'lambert_coords', label: 'Lambert coords', type: 'coords' },
       {
         name: 'amenities',
         label: 'Équipements',

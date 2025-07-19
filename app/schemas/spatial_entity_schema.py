@@ -18,7 +18,7 @@ class SpatialEntitySchema(SQLAlchemyAutoSchema):
         exclude = ()  # n'exclut rien, sauf si besoin
 
     def get_geometry(self, obj):
-        return obj.geometry_geojson()
+        return obj.geometry_geojson
 
     @pre_load
     def convert_lambert(self, data, **kwargs):
@@ -40,7 +40,4 @@ class SpatialEntitySchema(SQLAlchemyAutoSchema):
         return value
 
     def get_lambert_coords(self, obj):
-        if obj.geometry is None:
-            return None
-        shp = to_shape(obj.geometry)
-        return lambert_from_polygon(shp)
+        return obj.lambert_coords

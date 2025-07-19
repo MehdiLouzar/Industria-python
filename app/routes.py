@@ -106,7 +106,6 @@ def login():
         print(f"❌ Login failed: {exc}")
         abort(401, description=str(exc))
 
-    # Stocker les infos utilisateur dans la session
     session["user"] = userinfo
     user = SessionUser(userinfo)
     login_user(user)
@@ -382,6 +381,30 @@ def zones_geojson():
         )
     return jsonify({"type": "FeatureCollection", "features": features})
 
+@bp.route("/map/parcels")
+def parcels_geojson():
+    """Return parcel geometries as GeoJSON."""
+    parcels = Parcel.query.all()
+    features = []
+    for p in parcels:
+        if p.geometry is None:
+            continue
+        shp = shapely_to_wgs84(to_shape(p.geometry), getattr(p.geometry, "srid", 4326))
+        features.append(
+            {
+                "type": "Feature",
+                "id": p.id,
+                "geometry": shp.__geo_interface__,
+                "properties": {
+                    "name": p.name,
+                    "zone_id": p.zone_id,
+                    "is_free": p.is_free,
+                    "is_showroom": p.is_showroom,
+                    "area": float(p.area) if p.area is not None else None,
+                },
+            }
+        )
+    return jsonify({"type": "FeatureCollection", "features": features})
 
 @bp.route("/map/zones/<int:zone_id>")
 def zone_full_geojson(zone_id):

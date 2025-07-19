@@ -37,6 +37,73 @@ document.addEventListener('DOMContentLoaded', async () => {
       const resp = await fetch('/map/zones');
       if (!resp.ok) throw new Error('Échec du chargement des zones');
       const data = await resp.json();
+<<<<<<< 5tgoy0-codex/fix-geographic-entity-coordinate-logic
+
+      map.addSource('zones', { type: 'geojson', data });
+      map.addLayer({
+        id: 'zones-fill',
+        type: 'fill',
+        source: 'zones',
+        paint: {
+          'fill-color': '#3388ff',
+          'fill-opacity': 0.4,
+        },
+        filter: ['!=', '$type', 'Point']
+      });
+      map.addLayer({
+        id: 'zones-outline',
+        type: 'line',
+        source: 'zones',
+        paint: {
+          'line-color': '#3388ff',
+          'line-width': 2,
+        },
+        filter: ['!=', '$type', 'Point']
+      });
+
+      // load parcels and draw their outlines
+      try {
+        const pResp = await fetch('/map/parcels');
+        if (pResp.ok) {
+          const pData = await pResp.json();
+          map.addSource('parcels', { type: 'geojson', data: pData });
+          map.addLayer({
+            id: 'parcels-lines',
+            type: 'line',
+            source: 'parcels',
+            paint: {
+              'line-color': '#666',
+              'line-width': 1,
+            }
+          });
+        }
+      } catch (pErr) {
+        console.error('Error loading parcels', pErr);
+      }
+
+      const points = {
+        type: 'FeatureCollection',
+        features: data.features
+          .filter(f => f.properties.centroid)
+          .map(f => ({
+            type: 'Feature',
+            id: f.id,
+            geometry: f.properties.centroid,
+            properties: { name: f.properties.name }
+          }))
+      };
+      map.addSource('zones-centroids', { type: 'geojson', data: points });
+      map.addLayer({
+        id: 'zones-points',
+        type: 'circle',
+        source: 'zones-centroids',
+        paint: {
+          'circle-radius': 6,
+          'circle-color': '#3388ff'
+        }
+      });
+
+=======
 
       map.addSource('zones', { type: 'geojson', data });
       map.addLayer({
@@ -82,6 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
+>>>>>>> codex/fix-geographic-entity-coordinate-logic
       function showPopup(id, lngLat) {
         fetch(`/map/zones/${id}`)
           .then(r => {
