@@ -11,7 +11,7 @@ Base table used for spatial objects. Other spatial models inherit from this tabl
 | entity_type    | String     | Polymorphic identity     |
 | name           | String     |                          |
 | description    | Text       |                          |
-| geometry       | Geometry   | Spatial column           |
+| geometry       | Geometry   | Spatial column (WGS84). Accepts `lambert_coords` from the API which are converted on load. Provide any number of `x y` pairs as a JSON array or newline-separated string. The polygon is automatically closed if needed. |
 | created_at     | Timestamp  | Defaults to `now()`      |
 
 ## Country

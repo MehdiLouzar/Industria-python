@@ -1,16 +1,16 @@
 function disableTelemetry() {
-  if (typeof mapboxgl !== 'undefined') {
-    if (typeof mapboxgl.setTelemetryEnabled === 'function') {
-      mapboxgl.setTelemetryEnabled(false);
+  if (typeof maplibregl !== 'undefined') {
+    if (typeof maplibregl.setTelemetryEnabled === 'function') {
+      maplibregl.setTelemetryEnabled(false);
     }
-    if (mapboxgl.config) {
-      mapboxgl.config.EVENTS_URL = null;
+    if (maplibregl.config) {
+      maplibregl.config.EVENTS_URL = null;
     }
   }
 }
 
 function createBaseMap(el, storeName, options = {}) {
-  if (!el || typeof mapboxgl === 'undefined') {
+  if (!el || typeof maplibregl === 'undefined') {
     console.error('Map element or MapLibre missing');
     return null;
   }
@@ -21,20 +21,59 @@ function createBaseMap(el, storeName, options = {}) {
     window[storeName].remove();
   }
 
-  const leafletOpts = Object.assign({ worldCopyJump: true, maxZoom: 18 }, options.leaflet || {});
-  const center = options.center || [31.5, -7.0];
+  // Style par défaut avec des tuiles OpenStreetMap
+  const defaultStyle = {
+    version: 8,
+    sources: {
+      'osm-tiles': {
+        type: 'raster',
+        tiles: [
+          'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        ],
+        tileSize: 256,
+        attribution: '© OpenStreetMap contributors'
+      }
+    },
+    layers: [
+      {
+        id: 'osm-tiles-layer',
+        type: 'raster',
+        source: 'osm-tiles',
+        minzoom: 0,
+        maxzoom: 19
+      }
+    ]
+  };
+
+  // center coordinates are [lng, lat]
+  const center = options.center || [-7.0, 31.5];
   const zoom = options.zoom !== undefined ? options.zoom : 5;
-  const map = L.map(el, leafletOpts).setView(center, zoom);
+  
+  const map = new maplibregl.Map({
+    container: el,
+    style: options.style || defaultStyle,
+    center: center,
+    zoom: zoom,
+    maxZoom: options.maxZoom !== undefined ? options.maxZoom : 18,
+  });
+
+  if (options.maxBounds) {
+    map.setMaxBounds(options.maxBounds);
+  }
 
   if (storeName) {
     window[storeName] = map;
   }
 
-  L.mapboxGL({
-    style: options.style || 'https://demotiles.maplibre.org/style.json',
-    gl: mapboxgl,
-    renderWorldCopies: false,
-  }).addTo(map);
+  // Ajout des contrôles de navigation
+  map.addControl(new maplibregl.NavigationControl(), 'top-right');
+  
+  // Debug : log quand la carte est chargée
+  map.on('load', () => {
+    console.log('Carte chargée avec succès');
+  });
 
   return map;
 }

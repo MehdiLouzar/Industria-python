@@ -64,3 +64,20 @@ with `demo` / `demo` immediately.
 ## Schema
 
 The full database schema generated from the models is documented in [SCHEMA.md](SCHEMA.md).
+
+## Lambert coordinates
+
+Zones and parcels accept Lambert Nord Maroc coordinates when created or edited.
+The admin interface lets you add or remove coordinate rows so an unlimited
+number of `x y` pairs can be entered. You may also send a newline or semicolon
+separated string to the API.  The polygon is closed automatically and converted
+to WGS84 before storing it in the database.
+
+## JavaScript implementation
+
+The web interface relies entirely on vanilla JavaScript with no frameworks. All interactions including CRUD forms and map controls are handled using modern browser APIs. Map assets are loaded from a CDN using MapLibre so the app works without local dependencies. The default style comes from `https://demotiles.maplibre.org/style.json`.
+
+The home page map loads zone geometries from `/map/zones` and parcel outlines
+from `/map/parcels`. Each zone is drawn with a centroid marker so visitors can
+quickly locate available areas while parcel boundaries are also visible for
+reference.

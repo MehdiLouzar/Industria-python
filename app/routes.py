@@ -30,8 +30,6 @@ from .services import (
 from .models import (
     Country,
     Region,
-    Role,
-    User,
     Amenity,
     Zone,
     ZoneType,
@@ -46,8 +44,6 @@ from .models import (
 from .schemas import (
     CountrySchema,
     RegionSchema,
-    RoleSchema,
-    UserSchema,
     AmenitySchema,
     ZoneSchema,
     ZoneTypeSchema,
@@ -98,45 +94,32 @@ def login():
 
     svc = LoginService()
     try:
+        # Authentification avec Keycloak
         tokens = svc.login(username, password)
         userinfo = svc.userinfo(tokens["access_token"])
-    except Exception as exc:
-        abort(401, description=str(exc))
         
+        print(f"✅ Login successful for: {userinfo.get('preferred_username', username)}")
+        print(f"📧 Email: {userinfo.get('email')}")
+        print(f"🎭 Roles: {userinfo.get('realm_access', {}).get('roles', [])}")
+        
+    except Exception as exc:
+        print(f"❌ Login failed: {exc}")
+        abort(401, description=str(exc))
+
     session["user"] = userinfo
     user = SessionUser(userinfo)
     login_user(user)
 
-    return jsonify(tokens)
-
-
-@bp.route("/register", methods=["POST"])
-def register():
-    """Create a user in Keycloak and link it in the local database."""
-    data = request.get_json() or {}
-    username = data.get("username")
-    password = data.get("password")
-    email = data.get("email")
-    first = data.get("first_name")
-    last = data.get("last_name")
-    if not username or not password or not email:
-        abort(400, "Missing credentials")
-    svc = KeycloakAdminService()
-    try:
-        kc_id = svc.create_user(username, email, first, last, password)
-    except Exception as exc:  # pragma: no cover - pass through errors
-        abort(400, description=str(exc))
-    user = User(
-        first_name=first,
-        last_name=last,
-        email=email,
-        provider="keycloak",
-        provider_id=kc_id,
-    )
-    db.session.add(user)
-    db.session.commit()
-    return UserSchema().dump(user), 201
-
+    return jsonify({
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens.get("refresh_token"),
+        "user": {
+            "username": userinfo.get("preferred_username"),
+            "email": userinfo.get("email"),
+            "name": f"{userinfo.get('given_name', '')} {userinfo.get('family_name', '')}".strip(),
+            "roles": userinfo.get('realm_access', {}).get('roles', [])
+        }
+    })
 
 @bp.route("/logout", methods=["POST"])
 def logout():
@@ -206,8 +189,6 @@ def register_crud_routes(service: CRUDService, schema, endpoint: str):
 # Register CRUD routes for models with simple integer primary keys
 register_crud_routes(CountryService(Country), CountrySchema, "countries")
 register_crud_routes(RegionService(Region), RegionSchema, "regions")
-register_crud_routes(CRUDService(Role), RoleSchema, "roles")
-register_crud_routes(CRUDService(User), UserSchema, "users")
 register_crud_routes(CRUDService(Amenity), AmenitySchema, "amenities")
 register_crud_routes(CRUDService(ZoneType), ZoneTypeSchema, "zone_types")
 register_crud_routes(ZoneService(Zone), ZoneSchema, "zones")
@@ -218,6 +199,7 @@ register_crud_routes(
     CRUDService(AppointmentStatus), AppointmentStatusSchema, "appointment_statuses"
 )
 register_crud_routes(AppointmentService(Appointment), AppointmentSchema, "appointments")
+
 
 # Endpoint to list regions for a given country
 @bp.route("/api/countries/<int:country_id>/regions")
@@ -375,20 +357,53 @@ def manage_resource(resource):
 
 @bp.route("/map/zones")
 def zones_geojson():
-    """Return all zones centroids as GeoJSON."""
+    """Return zone polygons with centroids as GeoJSON."""
     zones = Zone.query.all()
     features = []
     for z in zones:
-        geom = z.centroid or z.geometry
+        geom = z.geometry or z.centroid
         if geom is None:
             continue
         shp = shapely_to_wgs84(to_shape(geom), getattr(geom, "srid", 4326))
-        features.append({
-            "type": "Feature",
-            "id": z.id,
-            "geometry": shp.__geo_interface__,
-            "properties": {"name": z.name},
-        })
+        centroid = None
+        if z.centroid is not None:
+            cshp = shapely_to_wgs84(
+                to_shape(z.centroid), getattr(z.centroid, "srid", 4326)
+            )
+            centroid = cshp.__geo_interface__
+        features.append(
+            {
+                "type": "Feature",
+                "id": z.id,
+                "geometry": shp.__geo_interface__,
+                "properties": {"name": z.name, "centroid": centroid},
+            }
+        )
+    return jsonify({"type": "FeatureCollection", "features": features})
+
+@bp.route("/map/parcels")
+def parcels_geojson():
+    """Return parcel geometries as GeoJSON."""
+    parcels = Parcel.query.all()
+    features = []
+    for p in parcels:
+        if p.geometry is None:
+            continue
+        shp = shapely_to_wgs84(to_shape(p.geometry), getattr(p.geometry, "srid", 4326))
+        features.append(
+            {
+                "type": "Feature",
+                "id": p.id,
+                "geometry": shp.__geo_interface__,
+                "properties": {
+                    "name": p.name,
+                    "zone_id": p.zone_id,
+                    "is_free": p.is_free,
+                    "is_showroom": p.is_showroom,
+                    "area": float(p.area) if p.area is not None else None,
+                },
+            }
+        )
     return jsonify({"type": "FeatureCollection", "features": features})
 
 @bp.route("/map/zones/<int:zone_id>")
@@ -397,38 +412,44 @@ def zone_full_geojson(zone_id):
     zone = Zone.query.get_or_404(zone_id)
     zone_geom = None
     if zone.geometry is not None:
-        shp = shapely_to_wgs84(to_shape(zone.geometry), getattr(zone.geometry, "srid", 4326))
+        shp = shapely_to_wgs84(
+            to_shape(zone.geometry), getattr(zone.geometry, "srid", 4326)
+        )
         zone_geom = shp.__geo_interface__
     parcels = []
     for p in zone.parcels:
         if p.geometry is None:
             continue
         shp = shapely_to_wgs84(to_shape(p.geometry), getattr(p.geometry, "srid", 4326))
-        parcels.append({
-            "type": "Feature",
-            "id": p.id,
-            "geometry": shp.__geo_interface__,
-            "properties": {
-                "name": p.name,
-                "is_free": p.is_free,
-                "is_showroom": p.is_showroom,
-                "area": float(p.area) if p.area is not None else None,
-                "CoS": float(p.CoS) if p.CoS is not None else None,
-                "CuS": float(p.CuS) if p.CuS is not None else None,
-            },
-        })
+        parcels.append(
+            {
+                "type": "Feature",
+                "id": p.id,
+                "geometry": shp.__geo_interface__,
+                "properties": {
+                    "name": p.name,
+                    "is_free": p.is_free,
+                    "is_showroom": p.is_showroom,
+                    "area": float(p.area) if p.area is not None else None,
+                    "CoS": float(p.CoS) if p.CoS is not None else None,
+                    "CuS": float(p.CuS) if p.CuS is not None else None,
+                },
+            }
+        )
     activities = [za.activity.label for za in zone.activities]
-    return jsonify({
-        "id": zone.id,
-        "name": zone.name,
-        "description": zone.description,
-        "available_parcels": zone.available_parcels,
-        "color": zone.color,
-        "activities": activities,
-        "is_available": zone.is_available,
-        "geometry": zone_geom,
-        "parcels": {"type": "FeatureCollection", "features": parcels},
-    })
+    return jsonify(
+        {
+            "id": zone.id,
+            "name": zone.name,
+            "description": zone.description,
+            "available_parcels": zone.available_parcels,
+            "color": zone.color,
+            "activities": activities,
+            "is_available": zone.is_available,
+            "geometry": zone_geom,
+            "parcels": {"type": "FeatureCollection", "features": parcels},
+        }
+    )
 
 
 @bp.route("/zones/<int:zone_id>")

@@ -3,7 +3,7 @@
 FROM postgis/postgis:14-3.3
 
 # Copie les deux scripts dans initdb.d
-COPY db/init/postgis.sql  /docker-entrypoint-initdb.d/
+#COPY db/init/postgis.sql  /docker-entrypoint-initdb.d/
 COPY db/init/initDB.sql    /docker-entrypoint-initdb.d/
 
 # Entrypoint :  

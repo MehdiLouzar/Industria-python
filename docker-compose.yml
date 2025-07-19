@@ -6,14 +6,15 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - db
+      keycloak_bootstrap:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
       KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
       KEYCLOAK_AUDIENCE: industria
       KEYCLOAK_CLIENT_ID: industria
       KEYCLOAK_CLIENT_SECRET: aIq8Fhb6mvS8FCVYEzEzA1wuDmoK0MRD
-      MAPBOX_TOKEN: my token
+      MAPBOX_TOKEN: pk.eyJ1IjoibWFwYm94dGVzdCIsImEiOiJja3Z2cG5mYzIwM3VxMnZxN2t6dW9sYjVhIn0.4Xy8F7a8b9f8f8f8f8f8f8f8f8f8f8f8
 
   db:
     build:
@@ -31,6 +32,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d industria"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
@@ -40,33 +46,30 @@ services:
     command: start-dev
     ports:
       - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/realms/master || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
   keycloak_bootstrap:
     build:
       context: .
       dockerfile: Dockerfile.bootstrap
-    command: >
-      sh -c "
-        until pg_isready -h db -p 5432; do
-          echo '⏳ Waiting for PostgreSQL...';
-          sleep 3;
-        done &&
-        until curl -f http://keycloak:8080/realms/master; do
-          echo '⏳ Waiting for Keycloak...';
-          sleep 5;
-        done &&
-        python scripts/bootstrap_keycloak.py
-      "
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: master
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-
-      
+    command: python scripts/bootstrap_keycloak.py
 
 volumes:
   pgdata:

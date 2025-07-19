@@ -1,4 +1,17 @@
 // static/js/home_map.js
+function geojsonBounds(feature) {
+  const bounds = new maplibregl.LngLatBounds();
+  const coords = feature.type === 'Feature' ? feature.geometry.coordinates : feature.coordinates;
+  (function expand(c) {
+    if (typeof c[0] === 'number') {
+      bounds.extend(c);
+    } else {
+      c.forEach(expand);
+    }
+  })(coords);
+  return bounds;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const mapEl = document.getElementById('map');
   if (!mapEl) {
@@ -7,37 +20,143 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const moroccoBounds = [
-    [20.0, -17.0],  // sud-ouest (lat, lon)
-    [36.0, -0.5]    // nord-est (lat, lon)
+    [-17.0, 20.0],
+    [-0.5, 36.0]
   ];
 
   const map = createBaseMap(mapEl, '_industriaMap', {
-    center: [31.5, -7.0],
+    // [lng, lat]
+    center: [-7.0, 31.5],
     zoom: 5,
-    leaflet: {
-      worldCopyJump: true,
-      maxBounds: moroccoBounds,
-      maxBoundsViscosity: 1.0,
-      maxZoom: 18,
-    }
+    maxBounds: moroccoBounds,
   });
   if (!map) return;
 
-  // Clustering et chargement des zones
-  const clusters = L.markerClusterGroup();
+  map.on('load', async () => {
+    try {
+      const resp = await fetch('/map/zones');
+      if (!resp.ok) throw new Error('Échec du chargement des zones');
+      const data = await resp.json();
+<<<<<<< 5tgoy0-codex/fix-geographic-entity-coordinate-logic
 
-  try {
-    const resp = await fetch('/map/zones');
-    if (!resp.ok) throw new Error('Échec du chargement des zones');
-    const data = await resp.json();
+      map.addSource('zones', { type: 'geojson', data });
+      map.addLayer({
+        id: 'zones-fill',
+        type: 'fill',
+        source: 'zones',
+        paint: {
+          'fill-color': '#3388ff',
+          'fill-opacity': 0.4,
+        },
+        filter: ['!=', '$type', 'Point']
+      });
+      map.addLayer({
+        id: 'zones-outline',
+        type: 'line',
+        source: 'zones',
+        paint: {
+          'line-color': '#3388ff',
+          'line-width': 2,
+        },
+        filter: ['!=', '$type', 'Point']
+      });
 
-    L.geoJSON(data, {
-      onEachFeature: (feature, layer) => {
-        layer.on('click', async () => {
-          try {
-            const zoneResp = await fetch(`/map/zones/${feature.id}`);
-            if (!zoneResp.ok) throw new Error('load zone');
-            const zone = await zoneResp.json();
+      // load parcels and draw their outlines
+      try {
+        const pResp = await fetch('/map/parcels');
+        if (pResp.ok) {
+          const pData = await pResp.json();
+          map.addSource('parcels', { type: 'geojson', data: pData });
+          map.addLayer({
+            id: 'parcels-lines',
+            type: 'line',
+            source: 'parcels',
+            paint: {
+              'line-color': '#666',
+              'line-width': 1,
+            }
+          });
+        }
+      } catch (pErr) {
+        console.error('Error loading parcels', pErr);
+      }
+
+      const points = {
+        type: 'FeatureCollection',
+        features: data.features
+          .filter(f => f.properties.centroid)
+          .map(f => ({
+            type: 'Feature',
+            id: f.id,
+            geometry: f.properties.centroid,
+            properties: { name: f.properties.name }
+          }))
+      };
+      map.addSource('zones-centroids', { type: 'geojson', data: points });
+      map.addLayer({
+        id: 'zones-points',
+        type: 'circle',
+        source: 'zones-centroids',
+        paint: {
+          'circle-radius': 6,
+          'circle-color': '#3388ff'
+        }
+      });
+
+=======
+
+      map.addSource('zones', { type: 'geojson', data });
+      map.addLayer({
+        id: 'zones-fill',
+        type: 'fill',
+        source: 'zones',
+        paint: {
+          'fill-color': '#3388ff',
+          'fill-opacity': 0.4,
+        },
+        filter: ['!=', '$type', 'Point']
+      });
+      map.addLayer({
+        id: 'zones-outline',
+        type: 'line',
+        source: 'zones',
+        paint: {
+          'line-color': '#3388ff',
+          'line-width': 2,
+        },
+        filter: ['!=', '$type', 'Point']
+      });
+
+      const points = {
+        type: 'FeatureCollection',
+        features: data.features
+          .filter(f => f.properties.centroid)
+          .map(f => ({
+            type: 'Feature',
+            id: f.id,
+            geometry: f.properties.centroid,
+            properties: { name: f.properties.name }
+          }))
+      };
+      map.addSource('zones-centroids', { type: 'geojson', data: points });
+      map.addLayer({
+        id: 'zones-points',
+        type: 'circle',
+        source: 'zones-centroids',
+        paint: {
+          'circle-radius': 6,
+          'circle-color': '#3388ff'
+        }
+      });
+
+>>>>>>> codex/fix-geographic-entity-coordinate-logic
+      function showPopup(id, lngLat) {
+        fetch(`/map/zones/${id}`)
+          .then(r => {
+            if (!r.ok) throw new Error('load zone');
+            return r.json();
+          })
+          .then(zone => {
             const link = zone.is_available ?
               `<a href="/zones/${zone.id}" class="text-blue-600">&rarr;</a>` : '';
             const html = `
@@ -48,20 +167,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p>Activités: ${zone.activities.join(', ')}</p>
                 ${link}
               </div>`;
-            layer.bindPopup(html).openPopup();
-          } catch (e) {
-            console.error('Erreur chargement zone', e);
-          }
-        });
+            new maplibregl.Popup()
+              .setLngLat(lngLat)
+              .setHTML(html)
+              .addTo(map);
+          })
+          .catch(e => console.error('Erreur chargement zone', e));
       }
-    }).eachLayer(l => clusters.addLayer(l));
 
-    map.addLayer(clusters);
+      map.on('click', 'zones-fill', (e) => {
+        const feature = e.features[0];
+        showPopup(feature.id, e.lngLat);
+      });
+      map.on('click', 'zones-points', (e) => {
+        const feature = e.features[0];
+        showPopup(feature.id, e.lngLat);
+      });
 
-    if (clusters.getLayers().length) {
-      map.fitBounds(clusters.getBounds(), { maxZoom: 8 });
+      if (data.features.length) {
+        map.fitBounds(geojsonBounds(data), { maxZoom: 8 });
+      }
+    } catch (err) {
+      console.error('Error loading zones', err);
     }
-  } catch (err) {
-    console.error('Error loading zones', err);
-  }
+  });
 });
