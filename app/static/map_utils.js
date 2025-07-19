@@ -26,7 +26,7 @@ function createBaseMap(el, storeName, options = {}) {
   const zoom = options.zoom !== undefined ? options.zoom : 5;
   const map = new maplibregl.Map({
     container: el,
-    style: options.style || '/static/vendor/maplibre-gl/style.json',
+    style: options.style || 'https://demotiles.maplibre.org/style.json',
     center: center,
     zoom: zoom,
     maxZoom: options.maxZoom !== undefined ? options.maxZoom : 18,

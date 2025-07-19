@@ -76,7 +76,7 @@ before storing them in the database.
 
 ## JavaScript implementation
 
-The web interface relies entirely on vanilla JavaScript with no frameworks. All interactions including CRUD forms and map controls are handled using modern browser APIs. Map assets are served locally using MapLibre so the app works without external dependencies. The default style is available at `static/vendor/maplibre-gl/style.json`.
+The web interface relies entirely on vanilla JavaScript with no frameworks. All interactions including CRUD forms and map controls are handled using modern browser APIs. Map assets are loaded from a CDN using MapLibre so the app works without local dependencies. The default style comes from `https://demotiles.maplibre.org/style.json`.
 
 The home page map loads zone geometries from `/map/zones` and displays a marker
 at each zone's centroid so visitors can quickly locate available areas.
