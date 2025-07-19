@@ -16,9 +16,6 @@ services:
       MAPBOX_TOKEN: my token
 
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile-db
     image: postgis/postgis:14-3.3
     container_name: industria-database
     restart: unless-stopped

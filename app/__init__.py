@@ -158,7 +158,5 @@ def create_app():
     logging.info("   ✅ Routes registered")
     logging.info("   ✅ Authentication configured")
     
-    if is_docker:
-        logging.info("   📊 Demo data will be populated by initDB.sql")
-    
     return app
+
