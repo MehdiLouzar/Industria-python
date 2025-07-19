@@ -1,6 +1,0 @@
-# Dockerfile-db - simplified PostGIS image
-FROM postgis/postgis:14-3.3
-
-# This image only provides PostGIS; database initialization occurs
-# later via the `init_db` service once tables are created by Flask.
-
