@@ -6,28 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Industria{% endblock %}</title>
 
-
-
   <!-- Tailwind CSS -->
   <link
-    href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    href="{{ url_for('static', filename='vendor/tailwind.min.css') }}"
     rel="stylesheet"
   />
 
-  <!-- MapLibre GL CSS -->
-  <link
-    href="https://unpkg.com/maplibre-gl@1.15.3/dist/maplibre-gl.css"
-    rel="stylesheet"
-  />
+  <!-- MapLibre GL CSS depuis CDN -->
+  <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
 
   {% block head %}
-    <!-- MapLibre GL JS -->
-    <script src="https://unpkg.com/maplibre-gl@1.15.3/dist/maplibre-gl.js"></script>
+    <!-- MapLibre GL JS depuis CDN -->
+    <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
   {% endblock %}
 
-  <!-- Styles personnalisés -->
+  <!-- Styles personnalisés minimaux (uniquement ceux non disponibles en Tailwind) -->
   <style>
-    body { background-color: #fff; }
+    /* Gradient border - pas disponible directement en Tailwind */
     .gradient-border {
       border: 1px solid transparent;
       background-image:
@@ -35,21 +30,27 @@
         linear-gradient(90deg, #f0c14b, #a16e2b);
       background-clip: padding-box, border-box;
     }
-    .title { letter-spacing: -0.4px; }
-    .showroom-marker {
-      background: #f87171;
-      color: #fff;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      line-height: 20px;
-      text-align: center;
-      font-weight: bold;
+    /* Fix MapLibre - s'assurer que la carte utilise toute la hauteur du conteneur */
+    #map {
+      position: relative;
+    }
+    #map .maplibregl-map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+    .maplibregl-canvas-container {
+      height: 100%;
+    }
+    .maplibregl-canvas {
+      display: block;
     }
   </style>
 </head>
 
-<body class="min-h-screen">
+<body class="min-h-screen bg-white">
   {% if user %}
     <div class="flex min-h-screen">
       <aside id="sidebar" class="bg-white shadow-md w-64 h-screen overflow-y-auto fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-200">
@@ -93,7 +94,7 @@
         <div class="container mx-auto px-6 flex justify-between items-center">
           <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
-            <span class="text-xl font-semibold text-gray-800">Industria</span>
+            <span class="text-xl font-semibold text-gray-800 tracking-tight">Industria</span>
           </a>
           <nav class="flex space-x-6 text-gray-700 font-medium"></nav>
           <div class="flex items-center space-x-4">
@@ -110,6 +111,14 @@
   </main>
 
   {% block scripts %}
+    <!-- Test de disponibilité de MapLibre -->
+    <script>
+      if (typeof maplibregl === 'undefined') {
+        console.error('MapLibre GL JS n\'est pas chargé !');
+      } else {
+        console.log('MapLibre GL JS version:', maplibregl.version);
+      }
+    </script>
       
     <script src="{{ url_for('static', filename='map_utils.js') }}"></script>
     {% if zone_id is defined %}
