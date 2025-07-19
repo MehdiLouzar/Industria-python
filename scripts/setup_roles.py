@@ -1,28 +1,27 @@
-"""Setup roles in Keycloak and assign them to demo user."""
+"""Setup roles in Keycloak and assign them to the demo user."""
+
 from app.services.keycloak_admin_service import KeycloakAdminService
+
 
 def main():
     svc = KeycloakAdminService()
     try:
-        # Créer les rôles de base
         roles = [
             ("admin", "Administrateur système"),
             ("manager", "Gestionnaire"),
-            ("user", "Utilisateur standard")
+            ("user", "Utilisateur standard"),
         ]
-        
-        for role_name, description in roles:
-            if not svc.role_exists(role_name):
-                svc.create_role(role_name, description)
-                print(f"✅ Created role: {role_name}")
-            else:
-                print(f"ℹ️ Role {role_name} already exists")
 
-        # Assigner le rôle admin à l'utilisateur demo
+        for name, desc in roles:
+            if not svc.role_exists(name):
+                svc.create_role(name, desc)
+                print(f"✅ Created role: {name}")
+            else:
+                print(f"ℹ️ Role {name} already exists")
+
         users = svc.keycloak_admin.get_users({"username": "demo"})
         if users:
-            user_id = users[0]["id"]
-            svc.assign_role_to_user(user_id, "admin")
+            svc.assign_role_to_user(users[0]["id"], "admin")
             print("✅ Assigned admin role to demo user")
         else:
             print("⚠️ Demo user not found")
@@ -32,5 +31,7 @@ def main():
         import traceback
         traceback.print_exc()
 
+
 if __name__ == "__main__":
     main()
+

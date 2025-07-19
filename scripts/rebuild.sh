@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
+# Rebuild and start containers sequentially
+
 echo "🚀 Rebuilding Industria with automated setup..."
 
+# Remove previous containers and dangling resources
 echo "🧹 Cleaning up existing containers..."
 docker compose down -v
 docker system prune -f
@@ -12,11 +15,13 @@ docker compose build --no-cache
 
 echo "🐘 Starting database..."
 docker compose up -d db
+
 echo "⏳ Waiting for PostgreSQL to accept connections..."
 docker compose exec db bash -c 'until pg_isready -U postgres; do sleep 2; done'
 
 echo "🐍 Starting Flask app..."
 docker compose up -d flask_app
+
 echo "⏳ Allowing Flask to initialize tables..."
 sleep 15
 

@@ -1,10 +1,9 @@
-# Dockerfile-db - Version simplifiée
+# Dockerfile-db - simplified PostGIS image
 FROM postgis/postgis:14-3.3
 
-# Copier seulement le script de population des données
+# Copy the SQL script executed at container start-up
 COPY db/init/initDB.sql /docker-entrypoint-initdb.d/01-populate-data.sql
 
-# L'image PostGIS gère automatiquement :
-# 1. La création de la base de données
-# 2. L'extension PostGIS
-# 3. L'exécution des scripts dans /docker-entrypoint-initdb.d/
+# The PostGIS image automatically creates the database, enables the extension
+# and runs scripts located in /docker-entrypoint-initdb.d
+
