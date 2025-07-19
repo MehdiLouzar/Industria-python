@@ -133,3 +133,65 @@ class KeycloakAdminService:
         
         role = self.keycloak_admin.get_realm_role(role_name)
         self.keycloak_admin.assign_realm_roles(user_id, [role])
+    
+    def create_client_with_secret(
+        self,
+        client_id: str,
+        name: str,
+        secret: str,
+        public_client: bool,
+        direct_access_grants_enabled: bool,
+        standard_flow_enabled: bool,
+        service_accounts_enabled: bool,
+    ) -> None:
+        """Créer un client avec un secret prédéfini."""
+        if not self.keycloak_admin:
+            raise RuntimeError("Keycloak admin not initialized")
+        
+        # Créer le client
+        client_representation = {
+            "clientId": client_id,
+            "name": name,
+            "enabled": True,
+            "protocol": "openid-connect",
+            "publicClient": public_client,
+            "redirectUris": ["*"],
+            "directAccessGrantsEnabled": direct_access_grants_enabled,
+            "standardFlowEnabled": standard_flow_enabled,
+            "serviceAccountsEnabled": service_accounts_enabled,
+            "fullScopeAllowed": True,
+            "secret": secret,  # Définir le secret
+        }
+        
+        self.keycloak_admin.create_client(client_representation)
+
+    def update_client_secret(self, client_id: str, new_secret: str) -> None:
+        """Mettre à jour le secret d'un client."""
+        if not self.keycloak_admin:
+            raise RuntimeError("Keycloak admin not initialized")
+        
+        # Récupérer l'ID interne du client
+        clients = self.keycloak_admin.get_clients()
+        client = next((c for c in clients if c["clientId"] == client_id), None)
+        
+        if not client:
+            raise ValueError(f"Client {client_id} not found")
+        
+        # Mettre à jour le secret
+        self.keycloak_admin.update_client(client["id"], {"secret": new_secret})
+
+    def get_client_secret(self, client_id: str) -> str:
+        """Récupérer le secret d'un client."""
+        if not self.keycloak_admin:
+            raise RuntimeError("Keycloak admin not initialized")
+        
+        # Récupérer l'ID interne du client
+        clients = self.keycloak_admin.get_clients()
+        client = next((c for c in clients if c["clientId"] == client_id), None)
+        
+        if not client:
+            raise ValueError(f"Client {client_id} not found")
+        
+        # Récupérer le secret
+        secret_data = self.keycloak_admin.get_client_secrets(client["id"])
+        return secret_data["value"]

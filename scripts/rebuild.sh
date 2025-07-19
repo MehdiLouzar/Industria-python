@@ -10,7 +10,9 @@ docker system prune -f
 
 # Rebuilder et démarrer
 echo "🔨 Building and starting services..."
-docker-compose up --build -d
+rm -rf node_modules package-lock.json
+docker compose build --no-cache
+docker compose up
 
 # Attendre et vérifier
 echo "⏳ Waiting for services to be ready..."

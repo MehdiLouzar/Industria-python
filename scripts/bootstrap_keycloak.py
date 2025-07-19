@@ -21,26 +21,42 @@ def wait_for_keycloak(max_retries=30, delay=5):
     raise RuntimeError("Keycloak not available after maximum retries")
 
 def setup_client(svc):
-    """Configurer le client Keycloak."""
+    """Configurer le client Keycloak avec secret prédéfini."""
     try:
-        if not svc.client_exists("industria"):
-            svc.create_client(
-                client_id="industria",
-                name="Industria App",
-                public_client=False,
-                direct_access_grants_enabled=True,
-                standard_flow_enabled=True,
-                service_accounts_enabled=True
-            )
-            print("✅ Created industria client in Keycloak")
-            return True
-        else:
+        client_id = "industria"
+        predefined_secret = "aIq8Fhb6mvS8FCVYEzEzA1wuDmoK0MRD"  # Secret fixe
+        
+        if svc.client_exists(client_id):
             print("ℹ️ Client industria already exists")
+            
+            # Vérifier/mettre à jour le secret
+            try:
+                svc.update_client_secret(client_id, predefined_secret)
+                print(f"✅ Client secret updated to predefined value")
+            except Exception as e:
+                print(f"⚠️ Could not update secret: {e}")
+            
             return False
+        
+        # Créer le client avec le secret prédéfini
+        svc.create_client_with_secret(
+            client_id=client_id,
+            name="Industria App",
+            secret=predefined_secret,
+            public_client=False,
+            direct_access_grants_enabled=True,
+            standard_flow_enabled=True,
+            service_accounts_enabled=True
+        )
+        
+        print(f"✅ Created client '{client_id}' with predefined secret")
+        print(f"🔑 Client secret: {predefined_secret}")
+        return True
+        
     except Exception as e:
         print(f"❌ Failed to create client: {e}")
         raise
-
+    
 def setup_roles(svc):
     """Configurer les rôles realm."""
     roles_config = [

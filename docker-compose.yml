@@ -1,21 +1,6 @@
+# docker-compose.yml - Version avec démarrage séquentiel
 services:
-  flask_app:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    depends_on:
-      keycloak_bootstrap:
-        condition: service_completed_successfully
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
-      KEYCLOAK_AUDIENCE: industria
-      KEYCLOAK_CLIENT_ID: industria
-      KEYCLOAK_CLIENT_SECRET: aIq8Fhb6mvS8FCVYEzEzA1wuDmoK0MRD
-      MAPBOX_TOKEN: pk.eyJ1IjoibWFwYm94dGVzdCIsImEiOiJja3Z2cG5mYzIwM3VxMnZxN2t6dW9sYjVhIn0.4Xy8F7a8b9f8f8f8f8f8f8f8f8f8f8f8
-
+  # Étape 1: Base de données seule
   db:
     build:
       context: .
@@ -34,10 +19,12 @@ services:
       - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d industria"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
 
+  # Étape 2: Keycloak (dépend de DB)
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
     environment:
@@ -51,11 +38,12 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/realms/master || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
 
+  # Étape 3: Bootstrap Keycloak (dépend de Keycloak)
   keycloak_bootstrap:
     build:
       context: .
@@ -70,6 +58,28 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     command: python scripts/bootstrap_keycloak.py
+
+  # Étape 4: Application Flask (dépend de tout)
+  flask_app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak_bootstrap:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
+      KEYCLOAK_AUDIENCE: industria
+      KEYCLOAK_CLIENT_ID: industria
+      MAPBOX_TOKEN: your_mapbox_token
+    restart: on-failure
+    # Utiliser le script d'attente en plus des depends_on
+    command: ["./scripts/wait-for-db.sh", "db", "5432", "python", "run.py"]
 
 volumes:
   pgdata:
