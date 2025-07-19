@@ -6,45 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Industria{% endblock %}</title>
 
-  <!-- Icônes -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+
 
   <!-- Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    rel="stylesheet"
+  />
 
   <!-- MapLibre GL CSS -->
   <link
-    href="https://unpkg.com/maplibre-gl@3.4.0/dist/maplibre-gl.css"
+    href="https://unpkg.com/maplibre-gl@1.15.3/dist/maplibre-gl.css"
     rel="stylesheet"
   />
 
   {% block head %}
     <!-- MapLibre GL JS -->
-    <script src="https://unpkg.com/maplibre-gl@3.4.0/dist/maplibre-gl.js"></script>
-    <script>window.mapboxgl = maplibregl;</script>
-    <!-- Leaflet CSS -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w=="
-      crossorigin=""
-    />
-    <!-- Leaflet JS -->
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg=="
-      crossorigin=""
-    ></script>
-    <!-- Plugin Leaflet-Mapbox-GL -->
-    <script
-      src="https://unpkg.com/mapbox-gl-leaflet@latest/leaflet-mapbox-gl.js"
-      integrity="sha512-BQqMTQdfBhdgBOCbIYV1vJORFvFdFn2MFF4vUtdREqrDRINNX0An1zsxclHp+CE3IjDCbirOaav9VMwUjXx+qg=="
-      crossorigin=""
-    ></script>
-    <!-- Leaflet MarkerCluster -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.Default.css') }}" />
-    <script src="{{ url_for('static', filename='vendor/leaflet.markercluster/leaflet.markercluster.js') }}"></script>
+    <script src="https://unpkg.com/maplibre-gl@1.15.3/dist/maplibre-gl.js"></script>
   {% endblock %}
 
   <!-- Styles personnalisés -->
