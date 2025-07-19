@@ -8,7 +8,6 @@ from ..models import (
     Region,
     Zone,
     Parcel,
-    User,
     AppointmentStatus,
 )
 
@@ -100,3 +99,31 @@ class AppointmentService(CRUDService):
         if obj.appointment_status_id and not AppointmentStatus.query.get(obj.appointment_status_id):
             abort(400, "Appointment status not found")
         return super().update(obj)
+    
+from ..services.activity_logger import ActivityLogger
+
+class ZoneService(CRUDService):
+    def create(self, obj):
+        created = super().create(obj)
+        # Logger la création
+        ActivityLogger.log_zone_created(created)
+        return created
+    
+    def update(self, obj):
+        updated = super().update(obj)
+        # Logger la modification
+        ActivityLogger.log_zone_updated(updated)
+        return updated
+    
+    def delete(self, obj):
+        # Logger avant suppression (pour avoir encore les infos)
+        ActivityLogger.log_zone_deleted(obj)
+        super().delete(obj)
+
+class AppointmentService(CRUDService):
+    def create(self, obj):
+        created = super().create(obj)
+        # Logger la création de RDV
+        if created.parcel:
+            ActivityLogger.log_parcel_reserved(created.parcel, created)
+        return created
