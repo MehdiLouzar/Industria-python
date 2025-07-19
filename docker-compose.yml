@@ -1,12 +1,13 @@
-# docker-compose.yml - Version avec démarrage séquentiel
+version: "3.9"
+
 services:
-  # Étape 1: Base de données seule
+# ─────────────────────────────── 1. Postgres ────────────────────────────────
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile-db
     image: postgis/postgis:14-3.3
     container_name: industria-database
+    build:
+      context: .
+      dockerfile: Dockerfile-db          # garde ta personnalisation éventuelle
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -15,16 +16,70 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data  # ⚠️ on NE monte plus initDB.sql ici
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d industria"]
-      interval: 3s
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+# ─────────────────────────────── 2. Flask App ───────────────────────────────
+  flask_app:
+    build: .
+    # client Postgres (pg_isready + psql) doit être présent dans l’image :
+    #   RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
+      KEYCLOAK_AUDIENCE: industria
+      KEYCLOAK_CLIENT_ID: industria
+      KEYCLOAK_CLIENT_SECRET: aIq8Fhb6mvS8FCVYEzEzA1wuDmoK0MRD
+      MAPBOX_TOKEN: my token
+      DOCKER_ENV: "true"
+    command: >
+      sh -c "
+        # ⏳ attente explicite de Postgres
+        until pg_isready -h db -p 5432 -U postgres; do sleep 1; done;
+        exec python run.py
+      "
+    healthcheck:
+      # healthy dès qu'une table créée par le modèle (ici 'countries') existe
+      test: >
+        CMD-SHELL psql "$$DATABASE_URL" -tAc
+        "SELECT 1 FROM pg_tables
+         WHERE schemaname='public' AND tablename='countries';" | grep -q 1
+      interval: 5s
       timeout: 3s
       retries: 20
       start_period: 10s
 
-  # Étape 2: Keycloak (dépend de DB)
+# ───────────────────────────── 3. Population SQL ────────────────────────────
+  init_db:
+    image: postgis/postgis:14-3.3        # contient déjà psql
+    container_name: industria-init
+    restart: "no"
+    depends_on:
+      flask_app:
+        condition: service_healthy       # tables déjà créées
+    environment:
+      PGPASSWORD: postgres
+    volumes:
+      - ./db/init/initDB.sql:/init.sql:ro
+    command: >
+      sh -c "
+        echo '🚀 Populating database…';
+        psql -h db -U postgres -d industria -v ON_ERROR_STOP=1 -f /init.sql;
+        echo '✅ Data populated';
+      "
+
+# ─────────────────────────────── 4. Keycloak ───────────────────────────────
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
     environment:
@@ -36,14 +91,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/realms/master || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 30s
 
-  # Étape 3: Bootstrap Keycloak (dépend de Keycloak)
+# ─────────────────────── 5. Bootstrap Keycloak (inchangé) ───────────────────
   keycloak_bootstrap:
     build:
       context: .
@@ -57,29 +106,16 @@ services:
       KEYCLOAK_REALM: master
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-    command: python scripts/bootstrap_keycloak.py
-
-  # Étape 4: Application Flask (dépend de tout)
-  flask_app:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    depends_on:
-      db:
-        condition: service_healthy
-      keycloak_bootstrap:
-        condition: service_completed_successfully
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
-      KEYCLOAK_AUDIENCE: industria
-      KEYCLOAK_CLIENT_ID: industria
-      MAPBOX_TOKEN: your_mapbox_token
-    restart: on-failure
-    # Utiliser le script d'attente en plus des depends_on
-    command: ["./scripts/wait-for-db.sh", "db", "5432", "python", "run.py"]
+    command: >
+      sh -c "
+        until pg_isready -h db -p 5432; do
+          echo '⏳ Waiting for PostgreSQL...'; sleep 3;
+        done &&
+        until curl -fs http://keycloak:8080/realms/master; do
+          echo '⏳ Waiting for Keycloak...'; sleep 5;
+        done &&
+        python scripts/bootstrap_keycloak.py
+      "
 
 volumes:
   pgdata:

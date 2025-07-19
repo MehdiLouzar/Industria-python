@@ -70,27 +70,74 @@ def create_app():
     db.init_app(app)
     
     with app.app_context():
-        # === CRÉER LES EXTENSIONS POSTGIS ===
+        # === S'ASSURER QUE POSTGIS EST DISPONIBLE ===
         try:
-            db.session.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
-            db.session.commit()
-            logging.info("✅ PostGIS extension ensured")
+            # Vérifier si PostGIS est installé
+            result = db.session.execute(text("SELECT extname FROM pg_extension WHERE extname = 'postgis';"))
+            if result.scalar():
+                logging.info("✅ PostGIS extension is available")
+            else:
+                logging.warning("⚠️ PostGIS extension not found, trying to create...")
+                db.session.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+                db.session.commit()
+                logging.info("✅ PostGIS extension created")
         except Exception as e:
-            logging.warning(f"⚠️ Could not ensure PostGIS extension: {e}")
+            logging.warning(f"⚠️ PostGIS check failed: {e}")
         
         # === IMPORTER LES MODÈLES ===
         from . import models
         
         # === CRÉER LES TABLES (Model First) ===
         try:
-            db.create_all()
-            logging.info("✅ Database tables created from models")
+            # Vérifier si les tables existent déjà
+            existing_tables = db.session.execute(text("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_type = 'BASE TABLE'
+            """)).fetchall()
+            
+            table_names = [row[0] for row in existing_tables]
+            
+            if not table_names:
+                logging.info("🔨 No tables found, creating from models...")
+                db.create_all()
+                logging.info("✅ Database tables created from SQLAlchemy models")
+            else:
+                logging.info(f"📋 Found existing tables: {', '.join(table_names)}")
+                
+                # Vérifier si toutes les tables nécessaires existent
+                missing_tables = []
+                required_tables = ['countries', 'regions', 'zones', 'activities', 'amenities']
+                
+                for table in required_tables:
+                    if table not in table_names:
+                        missing_tables.append(table)
+                
+                if missing_tables:
+                    logging.info(f"🔨 Creating missing tables: {', '.join(missing_tables)}")
+                    db.create_all()
+                    logging.info("✅ Missing tables created")
+                else:
+                    logging.info("✅ All required tables exist")
+                    
         except Exception as e:
-            logging.error(f"❌ Table creation failed: {e}")
+            logging.error(f"❌ Table creation/verification failed: {e}")
             raise
 
-        # === LES DONNÉES SERONT INSÉRÉES PAR LE SCRIPT SQL ===
-        logging.info("ℹ️ Tables ready - data will be populated by SQL script")
+        # === VÉRIFIER LA POPULATION DES DONNÉES ===
+        try:
+            # Vérifier si des données de base existent
+            country_count = db.session.execute(text("SELECT COUNT(*) FROM countries")).scalar()
+            region_count = db.session.execute(text("SELECT COUNT(*) FROM regions")).scalar()
+            
+            if country_count == 0 or region_count == 0:
+                logging.info("📊 No demo data found - will be populated by SQL script")
+            else:
+                logging.info(f"📊 Demo data exists: {country_count} countries, {region_count} regions")
+                
+        except Exception as e:
+            logging.warning(f"⚠️ Could not check demo data: {e}")
     
     # === ENREGISTREMENT DES ROUTES ===
     from .routes import bp as main_bp
@@ -99,5 +146,19 @@ def create_app():
     # Initialiser Flask-Login
     login_manager.init_app(app)
     
-    logging.info("🚀 Industria app initialized successfully")
+    # === INFORMATION DE DÉMARRAGE ===
+    is_docker = os.environ.get("DOCKER_ENV") == "true"
+    env_info = "🐳 Docker environment" if is_docker else "💻 Local environment"
+    
+    logging.info(f"🚀 Industria app initialized successfully ({env_info})")
+    logging.info("📋 Initialization summary:")
+    logging.info("   ✅ Flask app configured")
+    logging.info("   ✅ Database connection established")
+    logging.info("   ✅ Tables created/verified via SQLAlchemy")
+    logging.info("   ✅ Routes registered")
+    logging.info("   ✅ Authentication configured")
+    
+    if is_docker:
+        logging.info("   📊 Demo data will be populated by initDB.sql")
+    
     return app

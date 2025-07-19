@@ -1,25 +1,31 @@
 -- db/init/initDB.sql
--- Reset the database and populate demo data for Industria
+-- Population des données de démonstration pour Industria
+-- Les tables sont créées par Flask/SQLAlchemy
 
--- Create extension for PostGIS if not exists
+-- Vérifier que PostGIS est disponible
 CREATE EXTENSION IF NOT EXISTS postgis;
 
--- Drop and recreate schema cleanly
+-- Fonction pour vider les tables dans le bon ordre (respecting FK constraints)
 DO
 $$
 DECLARE
-  tbl text;
+  -- Tables dans l'ordre inverse pour le nettoyage (enfants -> parents)
   tables text[] := ARRAY[
-    'zone_activities','parcel_amenities','appointments','parcels',
-    'zones','zone_types','activities','amenities',
-    'appointment_status','regions','countries',
-    'activity_logs','spatial_entities'
+    'zone_activities', 'parcel_amenities', 'appointments', 'parcels',
+    'zones', 'zone_types', 'activities', 'amenities',
+    'appointment_status', 'regions', 'countries', 'activity_logs'
   ];
+  tbl text;
 BEGIN
-  -- Supprimer les tables dans l'ordre pour éviter les contraintes FK
+  -- Attendre que les tables soient créées par Flask
+  -- Cette fonction sera exécutée après Flask
+  RAISE NOTICE 'Starting data population...';
+  
+  -- Nettoyer les données existantes si les tables existent
   FOREACH tbl IN ARRAY tables LOOP
     IF to_regclass('public.' || tbl) IS NOT NULL THEN
       EXECUTE format('TRUNCATE TABLE public.%I RESTART IDENTITY CASCADE', tbl);
+      RAISE NOTICE 'Cleaned table: %', tbl;
     END IF;
   END LOOP;
 END
