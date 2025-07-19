@@ -250,6 +250,19 @@ async function initCrud() {
         renderPreviews();
         wrapper.append(input, preview);
       } 
+      else if (f.type === 'textarea') {
+        input = document.createElement('textarea');
+        input.className = 'w-full border border-gray-300 p-2 rounded';
+        if (item[f.name] != null) {
+          if (f.name === 'lambert_coords') {
+            input.value = item[f.name]
+              .map(pair => Array.isArray(pair) ? pair.join(' ') : '')
+              .join('\n');
+          } else {
+            input.value = item[f.name];
+          }
+        }
+      }
       else {
         input = document.createElement('input');
         input.type = f.type || 'text';
@@ -408,6 +421,15 @@ async function initCrud() {
         const selected = Array.from(el.querySelectorAll('input[type="checkbox"]:checked')).map(c => parseInt(c.value));
         const original = JSON.parse(el.dataset.original || '[]');
         linkUpdates.push({ field: f, selected, original });
+      }
+      else if (f.type === 'textarea' && f.name === 'lambert_coords') {
+        const coords = el.value.trim()
+          .split(/\n|;/)
+          .map(s => s.trim())
+          .filter(Boolean)
+          .map(pair => pair.split(/[,\s]+/).map(Number))
+          .filter(arr => arr.length === 2 && arr.every(n => !isNaN(n)));
+        data[f.name] = coords;
       }
       else data[f.name] = el.value;
     });

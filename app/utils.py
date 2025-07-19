@@ -1,5 +1,5 @@
 from pyproj import Transformer
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
 from shapely.ops import transform
 from geoalchemy2.shape import from_shape
 
@@ -30,3 +30,29 @@ def shapely_to_wgs84(geom, srid):
         return geom
     transformer = Transformer.from_crs(f"EPSG:{srid}", "EPSG:4326", always_xy=True)
     return transform(transformer.transform, geom)
+
+
+def polygon_from_lambert(coords):
+    """Return a GeoAlchemy geometry Polygon from Lambert coordinates."""
+    if not coords:
+        return None
+    lon_lat = [_to_wgs84.transform(x, y) for x, y in coords]
+    # ensure polygon is closed
+    if lon_lat[0] != lon_lat[-1]:
+        lon_lat.append(lon_lat[0])
+    poly = Polygon(lon_lat)
+    return from_shape(poly, srid=4326)
+
+
+def lambert_from_polygon(poly):
+    """Return a list of (x, y) Lambert coordinates from a Polygon geometry."""
+    if poly is None:
+        return None
+    exterior = getattr(poly, "exterior", None)
+    if exterior is None:
+        poly = poly.centroid
+        return [lambert_from_point(poly)]
+    coords = list(exterior.coords)
+    if len(coords) > 1 and coords[0] == coords[-1]:
+        coords = coords[:-1]
+    return [lambert_from_point(Point(x, y)) for x, y in coords]
