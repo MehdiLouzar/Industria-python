@@ -1,0 +1,20 @@
+<header class="bg-white shadow-md h-16 flex items-center">
+  <div class="container mx-auto px-6 flex justify-between items-center">
+    
+    <!-- Logo -->
+    <a href="{{ url_for('home') }}" class="flex items-center space-x-2">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
+      <span class="text-xl font-semibold text-gray-800">Industria</span>
+    </a>
+
+    <!-- Auth -->
+    <div class="flex items-center space-x-4">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">Déconnexion</a>
+      {% else %}
+        <a href="{{ url_for('login_form') }}" class="bg-indigo-500 text-white px-4 py-1.5 rounded hover:bg-indigo-600 text-sm">Connexion</a>
+      {% endif %}
+    </div>
+
+  </div>
+</header>

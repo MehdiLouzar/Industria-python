@@ -1,0 +1,74 @@
+services:
+  flask_app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/master
+      KEYCLOAK_AUDIENCE: industria
+      KEYCLOAK_CLIENT_ID: industria
+      KEYCLOAK_CLIENT_SECRET: aIq8Fhb6mvS8FCVYEzEzA1wuDmoK0MRD
+      MAPBOX_TOKEN: myCode
+
+  db:
+    image: postgis/postgis:14-3.3
+    container_name: industria-database
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: industria
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:                      # ← AJOUT
+      test: ["CMD-SHELL", "pg_isready -U postgres -d industria"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command: start-dev
+    ports:
+      - "8080:8080"
+
+  keycloak_bootstrap:
+    build:
+      context: .
+      dockerfile: Dockerfile.bootstrap
+    command: >
+      sh -c "
+        until pg_isready -h db -p 5432; do
+          echo '⏳ Waiting for PostgreSQL...';
+          sleep 3;
+        done &&
+        until curl -f http://keycloak:8080/realms/master; do
+          echo '⏳ Waiting for Keycloak...';
+          sleep 5;
+        done &&
+        python scripts/bootstrap_keycloak.py
+      "
+    depends_on:
+      - keycloak
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/industria
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: master
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      
+
+volumes:
+  pgdata:

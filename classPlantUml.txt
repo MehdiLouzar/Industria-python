@@ -1,0 +1,146 @@
+@startuml
+' Configuration
+hide circle
+skinparam classAttributeIconSize 0
+
+' ================= Classes ===================
+class SpatialEntity {
+  +id: Integer
+  +entity_type: String
+  +name: String
+  +description: Text
+  +geometry: Geometry
+  +created_at: Timestamp
+}
+
+class Country {
+  +id: Integer
+  +name: String
+  +code: String
+}
+
+class Region {
+  +id: Integer
+  +name: String
+  +country_id: Integer
+}
+
+class Role {
+  +id: Integer
+  +name: String
+}
+
+class User {
+  +id: Integer
+  +first_name: String
+  +last_name: String
+  +email: String
+  +provider: String
+  +provider_id: Text
+  +is_active: Boolean
+  +activation_token: Text
+  +user_role: Integer
+  +created_at: Timestamp
+}
+
+class Amenity {
+  +id: Integer
+  +amenities_key: String
+  +label: String
+  +icon: Text
+}
+
+class ZoneType {
+  +id: Integer
+  +name: String
+}
+
+class Zone {
+  +id: Integer
+  +zone_type_id: Integer
+  +is_available: Boolean
+  +region_id: Integer
+  +total_area: Numeric
+  +total_parcels: Integer
+  +available_parcels: Integer
+  +color: String
+  +centroid: Geometry
+}
+
+class Activity {
+  +id: Integer
+  +activities_key: String
+  +label: String
+  +icon: Text
+}
+
+class Parcel {
+  +id: Integer
+  +zone_Id: Integer
+  +area: Numeric
+  +is_free: Boolean
+  +is_available: Boolean
+  +is_showroom: Boolean
+  +CoS: Numeric
+  +CuS: Numeric
+  +photos: Text[]
+}
+
+class ActivityLog {
+  +id: Integer
+  +user_id: Integer
+  +action: Text
+  +target: Text
+  +timestamp: Timestamp
+}
+
+class AppointmentStatus {
+  +id: Integer
+  +status_name: String
+}
+
+class Appointment {
+  +id: Integer
+  +parcel_id: Integer
+  +appointment_status_id: Integer
+  +requested_date: Date
+  +confirmed_date: Timestamp
+  +appointment_message: Text
+  +contact_phone: String
+  +company_name: String
+  +job_title: String
+  +created_at: Timestamp
+}
+
+' =================== Association Classes ====================
+class ZoneActivity {
+  +zone_id: Integer
+  +activity_id: Integer
+}
+
+class ParcelAmenity {
+  +parcel_id: Integer
+  +amenity_id: Integer
+}
+
+
+' =============== Relations ====================
+Region "1" --> "*" Country : belongs to
+User "*" --> "1" Role : has
+Zone "*" -> "1" Region : belongs to
+Zone "*" -> "1" ZoneType : has type
+Zone "1" --|> "1" SpatialEntity : inherits
+Parcel "1" -> "*" Zone : belongs to
+Parcel "1" --|> "1" SpatialEntity : inherits
+Appointment "*" --> "1" Parcel : for
+Appointment "*" --> "1" AppointmentStatus : has
+ActivityLog "*" --> "1" User : triggered by
+
+Zone "*" --> "*" Activity : supports
+Zone "1" -> "*" ZoneActivity
+Activity "1" -> "*" ZoneActivity
+
+Parcel "*" --> "*" Amenity : has
+Parcel "1" -> "*" ParcelAmenity
+Amenity "1" --> "*" ParcelAmenity
+@enduml

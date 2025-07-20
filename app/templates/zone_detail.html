@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% set zone_id = zone.id %}
+
+{% block title %}Zone {{ zone.name }}{% endblock %}
+
+{% block content %}
+  <div class="mb-4">
+    <h1 class="text-2xl font-bold">{{ zone.name }}</h1>
+    <p class="text-gray-600">{{ zone.description }}</p>
+  </div>
+  <div id="zone-map" class="relative w-full overflow-hidden rounded-lg shadow-lg" style="height: 500px;"></div>
+  {% if zone.parcels %}
+    <h2 class="text-xl font-semibold mt-4">Parcelles libres</h2>
+    <ul class="list-disc list-inside">
+      {% for p in zone.parcels if p.is_free %}
+        <li>
+          <a href="{{ url_for('main.parcel_page', parcel_id=p.id) }}" class="text-blue-600">
+            {{ p.name }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+{% endblock %}

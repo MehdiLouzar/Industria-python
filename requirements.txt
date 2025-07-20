@@ -1,0 +1,16 @@
+flask
+pyjwt
+psycopg2-binary
+bcrypt
+marshmallow
+flask_sqlalchemy
+geoalchemy2
+marshmallow-sqlalchemy
+requests
+pytest
+flask-restx
+flask-cors
+python-keycloak
+flask-login
+shapely
+pyproj
