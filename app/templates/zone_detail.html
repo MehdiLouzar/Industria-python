@@ -8,7 +8,7 @@
     <h1 class="text-2xl font-bold">{{ zone.name }}</h1>
     <p class="text-gray-600">{{ zone.description }}</p>
   </div>
-  <div id="zone-map" class="w-full h-[500px]"></div>
+  <div id="zone-map" class="relative w-full overflow-hidden rounded-lg shadow-lg" style="height: 500px;"></div>
   {% if zone.parcels %}
     <h2 class="text-xl font-semibold mt-4">Parcelles libres</h2>
     <ul class="list-disc list-inside">
