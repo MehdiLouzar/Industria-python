@@ -73,7 +73,29 @@ function createBaseMap(el, storeName, options = {}) {
   // Debug : log quand la carte est chargée
   map.on('load', () => {
     console.log('Carte chargée avec succès');
+    // Forcer le redimensionnement après le chargement
+    setTimeout(() => {
+      map.resize();
+    }, 100);
   });
+
+  // Redimensionner quand la fenêtre change
+  window.addEventListener('resize', () => {
+    map.resize();
+  });
+
+  // Fix pour les problèmes de hauteur 0
+  setTimeout(() => {
+    const container = map.getContainer();
+    if (container.offsetHeight === 0) {
+      console.warn('Hauteur de carte à 0, tentative de correction...');
+      // Forcer un recalcul de la mise en page
+      container.style.display = 'none';
+      container.offsetHeight; // Force reflow
+      container.style.display = '';
+      map.resize();
+    }
+  }, 200);
 
   return map;
 }

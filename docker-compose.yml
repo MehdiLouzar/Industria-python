@@ -13,7 +13,7 @@ services:
       KEYCLOAK_AUDIENCE: industria
       KEYCLOAK_CLIENT_ID: industria
       KEYCLOAK_CLIENT_SECRET: aIq8Fhb6mvS8FCVYEzEzA1wuDmoK0MRD
-      MAPBOX_TOKEN: my token
+      MAPBOX_TOKEN: myCode
 
   db:
     image: postgis/postgis:14-3.3

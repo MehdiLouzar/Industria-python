@@ -21,7 +21,7 @@
   {% endblock %}
 
   <!-- Styles personnalisés minimaux (uniquement ceux non disponibles en Tailwind) -->
-  <style>
+   <style>
     /* Gradient border - pas disponible directement en Tailwind */
     .gradient-border {
       border: 1px solid transparent;
@@ -30,17 +30,7 @@
         linear-gradient(90deg, #f0c14b, #a16e2b);
       background-clip: padding-box, border-box;
     }
-    /* Fix MapLibre - s'assurer que la carte utilise toute la hauteur du conteneur */
-    #map {
-      position: relative;
-    }
-    #map .maplibregl-map {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-    }
+    /* Fix MapLibre - Ne pas interférer avec les hauteurs Tailwind */
     .maplibregl-canvas-container {
       height: 100%;
     }
@@ -122,7 +112,7 @@
       
     <script src="{{ url_for('static', filename='map_utils.js') }}"></script>
     {% if zone_id is defined %}
-      <script>var ZONE_ID = {{ zone_id }};</script>
+      <script>var ZONE_ID = { zone_id };</script>
       <script src="{{ url_for('static', filename='zone_map.js') }}"></script>
     {% else %}
       <script src="{{ url_for('static', filename='home_map.js') }}"></script>
