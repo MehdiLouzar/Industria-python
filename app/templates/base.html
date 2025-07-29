@@ -6,50 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Industria{% endblock %}</title>
 
-  <!-- Icônes -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
   <!-- Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-
-  <!-- MapLibre GL CSS -->
   <link
-    href="https://unpkg.com/maplibre-gl@3.4.0/dist/maplibre-gl.css"
+    href="{{ url_for('static', filename='vendor/tailwind.min.css') }}"
     rel="stylesheet"
   />
 
+  <!-- MapLibre GL CSS depuis CDN -->
+  <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
+
   {% block head %}
-    <!-- MapLibre GL JS -->
-    <script src="https://unpkg.com/maplibre-gl@3.4.0/dist/maplibre-gl.js"></script>
-    <script>window.mapboxgl = maplibregl;</script>
-    <!-- Leaflet CSS -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w=="
-      crossorigin=""
-    />
-    <!-- Leaflet JS -->
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg=="
-      crossorigin=""
-    ></script>
-    <!-- Plugin Leaflet-Mapbox-GL -->
-    <script
-      src="https://unpkg.com/mapbox-gl-leaflet@latest/leaflet-mapbox-gl.js"
-      integrity="sha512-BQqMTQdfBhdgBOCbIYV1vJORFvFdFn2MFF4vUtdREqrDRINNX0An1zsxclHp+CE3IjDCbirOaav9VMwUjXx+qg=="
-      crossorigin=""
-    ></script>
-    <!-- Leaflet MarkerCluster -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.markercluster/MarkerCluster.Default.css') }}" />
-    <script src="{{ url_for('static', filename='vendor/leaflet.markercluster/leaflet.markercluster.js') }}"></script>
+    <!-- MapLibre GL JS depuis CDN -->
+    <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
   {% endblock %}
 
-  <!-- Styles personnalisés -->
-  <style>
-    body { background-color: #fff; }
+  <!-- Styles personnalisés minimaux (uniquement ceux non disponibles en Tailwind) -->
+   <style>
+    /* Gradient border - pas disponible directement en Tailwind */
     .gradient-border {
       border: 1px solid transparent;
       background-image:
@@ -57,21 +30,17 @@
         linear-gradient(90deg, #f0c14b, #a16e2b);
       background-clip: padding-box, border-box;
     }
-    .title { letter-spacing: -0.4px; }
-    .showroom-marker {
-      background: #f87171;
-      color: #fff;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      line-height: 20px;
-      text-align: center;
-      font-weight: bold;
+    /* Fix MapLibre - Ne pas interférer avec les hauteurs Tailwind */
+    .maplibregl-canvas-container {
+      height: 100%;
+    }
+    .maplibregl-canvas {
+      display: block;
     }
   </style>
 </head>
 
-<body class="min-h-screen">
+<body class="min-h-screen bg-white">
   {% if user %}
     <div class="flex min-h-screen">
       <aside id="sidebar" class="bg-white shadow-md w-64 h-screen overflow-y-auto fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-200">
@@ -115,7 +84,7 @@
         <div class="container mx-auto px-6 flex justify-between items-center">
           <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-auto">
-            <span class="text-xl font-semibold text-gray-800">Industria</span>
+            <span class="text-xl font-semibold text-gray-800 tracking-tight">Industria</span>
           </a>
           <nav class="flex space-x-6 text-gray-700 font-medium"></nav>
           <div class="flex items-center space-x-4">
@@ -132,10 +101,18 @@
   </main>
 
   {% block scripts %}
+    <!-- Test de disponibilité de MapLibre -->
+    <script>
+      if (typeof maplibregl === 'undefined') {
+        console.error('MapLibre GL JS n\'est pas chargé !');
+      } else {
+        console.log('MapLibre GL JS version:', maplibregl.version);
+      }
+    </script>
       
     <script src="{{ url_for('static', filename='map_utils.js') }}"></script>
     {% if zone_id is defined %}
-      <script>var ZONE_ID = {{ zone_id }};</script>
+      <script>var ZONE_ID = {{zone_id}};</script>
       <script src="{{ url_for('static', filename='zone_map.js') }}"></script>
     {% else %}
       <script src="{{ url_for('static', filename='home_map.js') }}"></script>

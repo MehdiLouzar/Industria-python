@@ -13,12 +13,9 @@ services:
       KEYCLOAK_AUDIENCE: industria
       KEYCLOAK_CLIENT_ID: industria
       KEYCLOAK_CLIENT_SECRET: aIq8Fhb6mvS8FCVYEzEzA1wuDmoK0MRD
-      MAPBOX_TOKEN: my token
+      MAPBOX_TOKEN: myCode
 
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile-db
     image: postgis/postgis:14-3.3
     container_name: industria-database
     restart: unless-stopped
@@ -30,7 +27,12 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:                      # ← AJOUT
+      test: ["CMD-SHELL", "pg_isready -U postgres -d industria"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
